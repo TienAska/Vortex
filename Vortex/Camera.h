@@ -10,6 +10,7 @@ public:
 
 		m_aspectRatio = static_cast<float>(m_width) / m_height;
 	}
+
 	void Init(HWND hwnd)
 	{
 		UINT dxgiFactoryFlags = 0;
@@ -121,6 +122,15 @@ public:
 
 		check_hresult(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 
+		CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
+		extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+		extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+		extendedParams.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
+		extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+		extendedParams.lpSecurityAttributes = nullptr;
+		extendedParams.hTemplateFile = nullptr;
+		file_handle file(::CreateFile2(L"CubeMS.hlsl", GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
+
 
 		// Create the command list.
 		check_hresult(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.get(), nullptr, IID_PPV_ARGS(&m_commandList)));
@@ -142,6 +152,7 @@ public:
 			}
 		}
 	}
+
 	~Camera()
 	{
 		// Ensure that the GPU is no longer referencing resources that are about to be
