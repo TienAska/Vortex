@@ -16,7 +16,7 @@ struct VertexOut
 
 ConstantBuffer<Constants> Globals : register(b0);
 
-const float4 vertices[3] =
+static const float4 vertices[3] =
 {
 	float4(-1, -1, 0, 1),
 	float4( 0,  1, 0, 1),
@@ -31,7 +31,9 @@ void main(
     out indices uint3 tris[1],
     out vertices VertexOut verts[3])
 {
-	tris[0] = (0, 1, 2);
+	SetMeshOutputCounts(3, 1);
+	
+	tris[0] = uint3(0, 1, 2);
 	
 	verts[0].PositionHS = vertices[0];
 	verts[1].PositionHS = vertices[1];
