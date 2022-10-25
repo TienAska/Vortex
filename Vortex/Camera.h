@@ -1,5 +1,8 @@
 #pragma once
 
+#include "SimpleMath.h"
+using namespace DirectX::SimpleMath;
+
 class Camera
 {
 public:
@@ -271,6 +274,9 @@ public:
 	}
 
 private:
+	Vector3 m_position;
+	Quaternion m_rotation;
+
 	static const UINT FrameCount = 2;
 
 	// Pipeline objects.

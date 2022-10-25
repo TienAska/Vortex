@@ -100,10 +100,13 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
+    <ClCompile Include="SimpleMath.cpp" />
     <ClCompile Include="WinMain.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClInclude Include="SimpleMath.h" />
+    <None Include="SimpleMath.inl" />
     <ResourceCompile Include="Vortex.rc" />
     <Manifest Include="Vortex.exe.manifest" />
     <None Include="packages.config" />
