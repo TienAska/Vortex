@@ -8,6 +8,9 @@ public:
 		m_width = 1440;
 		m_height = 900;
 
+		m_viewport = CD3DX12_VIEWPORT{ 0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height) };
+		m_scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height));
+
 		m_aspectRatio = static_cast<float>(m_width) / m_height;
 	}
 
@@ -58,7 +61,7 @@ public:
 		check_hresult(D3D12CreateDevice(
 			hardwareAdapter.get(),
 			D3D_FEATURE_LEVEL_12_1,
-			IID_PPV_ARGS(m_device.put())
+			IID_PPV_ARGS(&m_device)
 		));
 
 
@@ -122,6 +125,12 @@ public:
 
 		check_hresult(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 
+		struct
+		{
+			byte* data;
+			uint32_t size;
+		} meshShader, pixelShader;
+
 		CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
 		extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
 		extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
@@ -129,11 +138,36 @@ public:
 		extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
 		extendedParams.lpSecurityAttributes = nullptr;
 		extendedParams.hTemplateFile = nullptr;
-		file_handle file(::CreateFile2(L"CubeMS.hlsl", GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
 
+		ReadDataFromFile(L"Assets/ShaderCache/CubeMS.cso", &meshShader.data, &meshShader.size);
+		ReadDataFromFile(L"Assets/ShaderCache/CubePS.cso", &pixelShader.data, &pixelShader.size);
+
+
+		check_hresult(m_device->CreateRootSignature(0, meshShader.data, meshShader.size, IID_PPV_ARGS(&m_rootSignature)));
+
+		D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc = {};
+		//psoDesc.pRootSignature = m_rootSignature.get();
+		psoDesc.MS = { meshShader.data, meshShader.size };
+		psoDesc.PS = { pixelShader.data, pixelShader.size };
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = m_renderTargets[0]->GetDesc().Format;
+		//psoDesc.DSVFormat = m_depthStencil->GetDesc().Format;
+		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);    // CW front; cull back
+		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);         // Opaque
+		//psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // Less-equal depth test w/ writes; no stencil
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.SampleDesc = DefaultSampleDesc();
+
+		auto psoStream = CD3DX12_PIPELINE_MESH_STATE_STREAM(psoDesc);
+
+		D3D12_PIPELINE_STATE_STREAM_DESC streamDesc;
+		streamDesc.pPipelineStateSubobjectStream = &psoStream;
+		streamDesc.SizeInBytes = sizeof(psoStream);
+
+		check_hresult(m_device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&m_pipelineState)));
 
 		// Create the command list.
-		check_hresult(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.get(), nullptr, IID_PPV_ARGS(&m_commandList)));
+		check_hresult(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.get(), m_pipelineState.get(), IID_PPV_ARGS(&m_commandList)));
 
 		// Command lists are created in the recording state, but there is nothing
 		// to record yet. The main loop expects it to be closed, so close it now.
@@ -175,15 +209,22 @@ public:
 		// re-recording.
 		check_hresult(m_commandList->Reset(m_commandAllocator.get(), m_pipelineState.get()));
 
+		m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
+		m_commandList->RSSetViewports(1, &m_viewport);
+		m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
 		// Indicate that the back buffer will be used as a render target.
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		m_commandList->ResourceBarrier(1, &barrier);
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
+		m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
 		// Record commands.
 		const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 		m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+		m_commandList->DispatchMesh(1, 1, 1);
 
 		// Indicate that the back buffer will now be used to present.
 		barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -233,14 +274,17 @@ private:
 	static const UINT FrameCount = 2;
 
 	// Pipeline objects.
+	CD3DX12_VIEWPORT m_viewport;
+	CD3DX12_RECT m_scissorRect;
 	com_ptr<IDXGISwapChain3> m_swapChain;
-	com_ptr<ID3D12Device> m_device;
+	com_ptr<ID3D12Device2> m_device;
 	com_ptr<ID3D12Resource> m_renderTargets[FrameCount];
 	com_ptr<ID3D12CommandAllocator> m_commandAllocator;
 	com_ptr<ID3D12CommandQueue> m_commandQueue;
+	com_ptr<ID3D12RootSignature> m_rootSignature;
 	com_ptr<ID3D12DescriptorHeap> m_rtvHeap;
 	com_ptr<ID3D12PipelineState> m_pipelineState;
-	com_ptr<ID3D12GraphicsCommandList> m_commandList;
+	com_ptr<ID3D12GraphicsCommandList6> m_commandList;
 	UINT m_rtvDescriptorSize;
 
 	// Synchronization objects.
@@ -253,4 +297,43 @@ private:
 	UINT m_width;
 	UINT m_height;
 	float m_aspectRatio;
+
+	inline HRESULT ReadDataFromFile(LPCWSTR filename, byte** data, UINT* size)
+	{
+		CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
+		extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+		extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+		extendedParams.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
+		extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+		extendedParams.lpSecurityAttributes = nullptr;
+		extendedParams.hTemplateFile = nullptr;
+
+		file_handle file(CreateFile2(filename, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
+		if (file.get() == INVALID_HANDLE_VALUE)
+		{
+			throw std::exception();
+		}
+
+		FILE_STANDARD_INFO fileInfo = {};
+		if (!GetFileInformationByHandleEx(file.get(), FileStandardInfo, &fileInfo, sizeof(fileInfo)))
+		{
+			throw std::exception();
+		}
+
+		if (fileInfo.EndOfFile.HighPart != 0)
+		{
+			throw std::exception();
+		}
+
+		*data = reinterpret_cast<byte*>(malloc(fileInfo.EndOfFile.LowPart));
+		*size = fileInfo.EndOfFile.LowPart;
+
+		if (!ReadFile(file.get(), *data, fileInfo.EndOfFile.LowPart, nullptr, nullptr))
+		{
+			throw std::exception();
+		}
+
+		return S_OK;
+	}
+
 };
