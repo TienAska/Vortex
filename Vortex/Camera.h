@@ -1,6 +1,5 @@
 #pragma once
 
-#include "SimpleMath.h"
 using namespace DirectX::SimpleMath;
 
 class Camera
@@ -8,6 +7,9 @@ class Camera
 public:
 	Camera()
 	{
+		m_position = Vector3();
+		m_rotation = Quaternion();
+
 		m_width = 1440;
 		m_height = 900;
 
@@ -15,6 +17,8 @@ public:
 		m_scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height));
 
 		m_aspectRatio = static_cast<float>(m_width) / m_height;
+
+		m_fieldOfView = 45.0f;
 	}
 
 	void Init(HWND hwnd)
@@ -258,6 +262,11 @@ public:
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	}
 
+	void Update()
+	{
+
+	}
+
 	void Render()
 	{
 		// Record all the commands we need to render the scene into the command list.
@@ -273,9 +282,44 @@ public:
 		WaitForPreviousFrame();
 	}
 
+	Matrix GetViewMatrix()
+	{
+		return (Matrix::CreateFromQuaternion(m_rotation) * Matrix::CreateTranslation(m_position)).Invert();
+	}
+
+	Matrix GetViewProjectionMatrix()
+	{
+		return GetViewMatrix() * Matrix::CreatePerspectiveFieldOfView(m_fieldOfView, m_aspectRatio, 0.1f, 10000.0f);
+	}
+
+	void MoveForward(float offset)
+	{
+		Vector3 direction = Vector3(0.0f, 0.0f, -1.0f) * m_rotation;
+		m_position += offset * direction;
+	}
+
+	void MoveRight(float offset)
+	{
+		Vector3 direction = Vector3(1.0f, 0.0f, 0.0f) * m_rotation;
+		m_position += offset * direction;
+	}
+
+	void MoveUp(float offset)
+	{
+		Vector3 direction = Vector3(0.0f, 1.0f, 0.0f) * m_rotation;
+		m_position += offset * direction;
+	}
+
+	void Rotate(float pitch, float yaw)
+	{
+		m_rotation = Quaternion::CreateFromYawPitchRoll(yaw, pitch, 0.0f);
+	}
+
 private:
 	Vector3 m_position;
 	Quaternion m_rotation;
+	float m_fieldOfView;
+	float m_aspectRatio;
 
 	static const UINT FrameCount = 2;
 
@@ -302,7 +346,6 @@ private:
 	// Viewport dimensions.
 	UINT m_width;
 	UINT m_height;
-	float m_aspectRatio;
 
 	inline HRESULT ReadDataFromFile(LPCWSTR filename, byte** data, UINT* size)
 	{

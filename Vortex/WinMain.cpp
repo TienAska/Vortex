@@ -18,7 +18,35 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 	}
 		return 0;
 
+	case WM_KEYDOWN:
+		UINT key = static_cast<UINT>(wParam);
+		switch (key)
+		{
+		case 'w':
+			camera->MoveForward(1.0f);
+			break;
+		case 's':
+			camera->MoveForward(-1.0f);
+			break;
+		case 'd':
+			camera->MoveRight(1.0f);
+			break;
+		case 'a':
+			camera->MoveRight(-1.0f);
+			break;
+		case 'e':
+			camera->MoveUp(1.0f);
+			break;
+		case 'q':
+			camera->MoveUp(-1.0f);
+			break;
+		}
+		return 0;
+	case WM_KEYUP:
+		return 0;
+
 	case WM_PAINT:
+		camera->Update();
 		camera->Render();
 		return 0;
 
