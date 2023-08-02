@@ -9,6 +9,7 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 {
 	Camera* camera = reinterpret_cast<Camera*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
+	UINT key = static_cast<UINT>(wParam);
 	switch (message)
 	{
 	case WM_CREATE:
@@ -19,7 +20,6 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 		return 0;
 
 	case WM_KEYDOWN:
-		UINT key = static_cast<UINT>(wParam);
 		switch (key)
 		{
 		case 'w':
