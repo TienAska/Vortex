@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vortex", "Vortex\Vortex.vcxproj", "{64DB5C11-81B0-4F7C-825A-512B64ABE184}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vortex", "Vortex\Vortex.vcxproj", "{AF439F46-EB76-4F85-9D79-D8C985FB15C3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample", "Sample\Sample.vcxproj", "{99F1E6B9-38FB-4F07-AD10-4DA566F1D8BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{64DB5C11-81B0-4F7C-825A-512B64ABE184}.Debug|x64.ActiveCfg = Debug|x64
-		{64DB5C11-81B0-4F7C-825A-512B64ABE184}.Debug|x64.Build.0 = Debug|x64
-		{64DB5C11-81B0-4F7C-825A-512B64ABE184}.Release|x64.ActiveCfg = Release|x64
-		{64DB5C11-81B0-4F7C-825A-512B64ABE184}.Release|x64.Build.0 = Release|x64
+		{AF439F46-EB76-4F85-9D79-D8C985FB15C3}.Debug|x64.ActiveCfg = Debug|x64
+		{AF439F46-EB76-4F85-9D79-D8C985FB15C3}.Debug|x64.Build.0 = Debug|x64
+		{AF439F46-EB76-4F85-9D79-D8C985FB15C3}.Release|x64.ActiveCfg = Release|x64
+		{AF439F46-EB76-4F85-9D79-D8C985FB15C3}.Release|x64.Build.0 = Release|x64
+		{99F1E6B9-38FB-4F07-AD10-4DA566F1D8BE}.Debug|x64.ActiveCfg = Debug|x64
+		{99F1E6B9-38FB-4F07-AD10-4DA566F1D8BE}.Debug|x64.Build.0 = Debug|x64
+		{99F1E6B9-38FB-4F07-AD10-4DA566F1D8BE}.Release|x64.ActiveCfg = Release|x64
+		{99F1E6B9-38FB-4F07-AD10-4DA566F1D8BE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,5 +1,5 @@
 ========================================================================
-    C++/WinRT Vortex Project Overview
+    C++/WinRT Sample Project Overview
 ========================================================================
 
 This project demonstrates how to get started consuming Windows Runtime 
