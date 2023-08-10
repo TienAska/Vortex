@@ -28,3 +28,4 @@
 #include <DispatcherQueue.h>
 #include <dcomp.h>
 
+#include "Vortex.h"

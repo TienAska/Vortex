@@ -70,6 +70,10 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>dcomp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CopyFileToFolders />
+    <CopyFileToFolders>
+      <DestinationFolders>$(OutDir)Assets\Shaders</DestinationFolders>
+    </CopyFileToFolders>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -92,7 +96,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
@@ -108,7 +111,25 @@
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Shaders\Triangle.hlsli" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="Assets\Shaders\CubeMS.hlsl">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\CubePS.hlsl">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\TriangleMS.hlsl">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\TrianglePS.hlsl">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\TriangleVS.hlsl">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

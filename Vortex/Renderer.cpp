@@ -114,8 +114,8 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	winrt::check_hresult(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 
 	// Compile shaders.
-	Shader vertexShader(L"Assets/Shaders/TriangleVS.hlsl", L"VertexShaderMain", Shader::Vertex);
-	Shader pixelShader(L"Assets/Shaders/TriangleVS.hlsl", L"PixelShaderMain", Shader::Pixel);
+	Shader vertexShader(L"TriangleVS");
+	Shader pixelShader(L"TrianglePS");
 
 
 	// Define the vertex input layout.

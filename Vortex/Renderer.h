@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Vortex.h"
-
 namespace Vortex
 {
 	class VORTEX_API Renderer
