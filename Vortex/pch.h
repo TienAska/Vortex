@@ -27,5 +27,6 @@
 #include <d3dx12.h>
 #include <DispatcherQueue.h>
 #include <dcomp.h>
+#include <WICTextureLoader.h>
 
 #include "Vortex.h"

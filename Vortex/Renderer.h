@@ -18,6 +18,9 @@ namespace Vortex
 		void WaitForPreviousFrame();
 
 		winrt::com_ptr<IDXGISwapChain3> GetSwapChain() { return m_swapChain; }
+
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateResourceHeap();
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateSamplerHeap();
 	private:
 
 		static const UINT FrameCount = 2;
@@ -50,6 +53,12 @@ namespace Vortex
 		winrt::com_ptr<ID3D12Resource> m_vertexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
+
+		UINT m_cbvResourceSize;
+		winrt::com_ptr<ID3D12Resource> m_cbvResource;
+		winrt::hstring m_textureFileName;
+		winrt::com_ptr<ID3D12Resource> m_srvResource;
+		winrt::com_ptr<ID3D12Resource> m_uavResource;
 
 		// Synchronization objects.
 		UINT m_frameIndex;
