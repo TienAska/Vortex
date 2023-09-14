@@ -3,6 +3,16 @@
 #include "Renderer.h"
 #include "Shader.h"
 
+extern "C" __declspec(dllexport) const wchar_t* GetName()
+{
+	return L"Vortex";
+}
+
+extern "C" __declspec(dllexport) int GetNum()
+{
+	return 1;
+}
+
 Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width), m_height(height)
 {
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
