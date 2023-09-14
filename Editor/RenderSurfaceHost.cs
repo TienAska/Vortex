@@ -12,7 +12,7 @@ namespace Editor
     {
         protected override HandleRef BuildWindowCore(HandleRef hwndParent)
         {
-            IntPtr hwnd = CreateWindowEx(0, "static", GetNum().ToString(), 0x10000000 | 0x40000000, 0, 0, 100, 100, hwndParent.Handle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            IntPtr hwnd = CreateWindowEx(0, "static", GetName(), 0x10000000 | 0x40000000, 0, 0, 100, 100, hwndParent.Handle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
             HandleRef handleRef = new HandleRef(this, hwnd);
             return handleRef;
         }
@@ -38,7 +38,8 @@ namespace Editor
         [DllImport("user32.dll", EntryPoint = "DestroyWindow", CharSet = CharSet.Unicode)]
         internal static extern bool DestroyWindow(IntPtr hwnd);
 
-        [DllImport("Vortex.dll", EntryPoint = "GetName", CharSet = CharSet.Unicode)]
+        [DllImport("Vortex.dll")]
+        [return: MarshalAs(UnmanagedType.BStr)]
         static extern string GetName();
 
         [DllImport("Vortex.dll", EntryPoint = "GetNum", CharSet = CharSet.Unicode)]

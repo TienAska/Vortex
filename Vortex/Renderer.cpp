@@ -3,9 +3,9 @@
 #include "Renderer.h"
 #include "Shader.h"
 
-extern "C" __declspec(dllexport) const wchar_t* GetName()
+extern "C" __declspec(dllexport) BSTR GetName()
 {
-	return L"Vortex";
+	return SysAllocString(L"Vortex");
 }
 
 extern "C" __declspec(dllexport) int GetNum()
