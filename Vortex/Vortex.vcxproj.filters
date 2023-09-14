@@ -15,6 +15,9 @@
     <Filter Include="Assets\Shaders">
       <UniqueIdentifier>{105cd102-6012-4554-a85b-62065c049dce}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\Textures">
+      <UniqueIdentifier>{39c82011-706c-4421-849f-212829e8ffb7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -52,9 +55,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Assets\Shaders\Triangle.hlsli">
-      <Filter>Assets\Shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="Assets\Shaders\CubeMS.hlsl">
@@ -70,6 +70,12 @@
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Assets\Shaders\TriangleVS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Textures\Fabric_DishCloth_D.tif">
+      <Filter>Assets\Textures</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\Triangle.hlsli">
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
   </ItemGroup>

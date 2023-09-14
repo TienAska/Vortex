@@ -72,7 +72,7 @@
     </Link>
     <CopyFileToFolders />
     <CopyFileToFolders>
-      <DestinationFolders>$(OutDir)Assets\Shaders</DestinationFolders>
+      <DestinationFolders>$(OutDir)Assets</DestinationFolders>
     </CopyFileToFolders>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -113,24 +113,37 @@
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Shaders\Triangle.hlsli" />
+    <CopyFileToFolders Include="Assets\Shaders\Triangle.hlsli">
+      <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Assets\Shaders</DestinationFolders>
+    </CopyFileToFolders>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="Assets\Shaders\CubeMS.hlsl">
       <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Assets\Shaders</DestinationFolders>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Assets\Shaders\CubePS.hlsl">
       <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Assets\Shaders</DestinationFolders>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Assets\Shaders\TriangleMS.hlsl">
       <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Assets\Shaders</DestinationFolders>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Assets\Shaders\TrianglePS.hlsl">
       <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Assets\Shaders</DestinationFolders>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Assets\Shaders\TriangleVS.hlsl">
       <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Assets\Shaders</DestinationFolders>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="Assets\Textures\Fabric_DishCloth_D.tif">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Assets\Textures</DestinationFolders>
     </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

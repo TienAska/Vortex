@@ -56,7 +56,7 @@ namespace Vortex
 
 		UINT m_cbvResourceSize;
 		winrt::com_ptr<ID3D12Resource> m_cbvResource;
-		winrt::hstring m_textureFileName;
+		winrt::hstring m_textureFilename;
 		winrt::com_ptr<ID3D12Resource> m_srvResource;
 		winrt::com_ptr<ID3D12Resource> m_uavResource;
 

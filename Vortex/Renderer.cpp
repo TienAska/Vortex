@@ -10,6 +10,8 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 
 	UINT dxgiFactoryFlags = 0;
 
+	m_textureFilename = L"Assets/Textures/Fabric_DishCloth_D.tif";
+
 #if defined(_DEBUG)
 	// Enable the debug layer (requires the Graphics Tools "optional feature").
 	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
@@ -319,11 +321,11 @@ winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateResourceHeap()
 
 	// Shader resource view
 	{
-		std::unique_ptr<uint8_t[]> decodedData;
 		D3D12_SUBRESOURCE_DATA subresourceData;
-		winrt::check_hresult(DirectX::LoadWICTextureFromFile(m_device.get(), m_textureFileName.c_str(), m_srvResource.put(), decodedData, subresourceData));
-		D3D12_RESOURCE_DESC textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1024, 1024);
+		std::unique_ptr<uint8_t[]> decodedData;
+		winrt::check_hresult(DirectX::LoadWICTextureFromFile(m_device.get(), m_textureFilename.c_str(), m_srvResource.put(), decodedData, subresourceData));
 
+		D3D12_RESOURCE_DESC textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1024, 1024);
 		D3D12_HEAP_PROPERTIES defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 		winrt::check_hresult(m_device->CreateCommittedResource(
 			&defaultHeapProperties,
@@ -348,7 +350,8 @@ winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateResourceHeap()
 			IID_PPV_ARGS(&uploadResource)
 		));
 
-		UpdateSubresources(m_commandList.get(), m_srvResource.get(), uploadResource.get(), 0, 0, 0, &subresourceData);
+
+		UpdateSubresources(m_commandList.get(), m_srvResource.get(), uploadResource.get(), 0, 0, 1, &subresourceData);
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = textureDesc.Format;
