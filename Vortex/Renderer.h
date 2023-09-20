@@ -21,6 +21,7 @@ namespace Vortex
 
 		winrt::com_ptr<ID3D12DescriptorHeap> CreateResourceHeap();
 		winrt::com_ptr<ID3D12DescriptorHeap> CreateSamplerHeap();
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateRTVHeap();
 	private:
 
 		static const UINT FrameCount = 2;
@@ -54,6 +55,7 @@ namespace Vortex
 		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
 
+		winrt::com_ptr<ID3D12DescriptorHeap> m_resourceHeap;
 		UINT m_cbvResourceSize;
 		winrt::com_ptr<ID3D12Resource> m_cbvResource;
 		winrt::hstring m_textureFilename;

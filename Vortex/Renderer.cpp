@@ -56,20 +56,30 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
 	winrt::com_ptr<IDXGISwapChain1> swapChain;
-	winrt::check_hresult(factory->CreateSwapChainForComposition(
+	//winrt::check_hresult(factory->CreateSwapChainForComposition(
+	//	m_commandQueue.get(),        // Swap chain needs the queue so that it can force a flush on it.
+	//	&swapChainDesc,
+	//	nullptr,
+	//	swapChain.put()
+	//));
+
+
+	//winrt::check_hresult(DCompositionCreateDevice(nullptr, IID_PPV_ARGS(&dcompDevice)));
+	//winrt::check_hresult(dcompDevice->CreateTargetForHwnd(hwnd, true, dcompTarget.put()));
+	//winrt::check_hresult(dcompDevice->CreateVisual(dcompVisual.put()));
+	//winrt::check_hresult(dcompVisual->SetContent(swapChain.get()));
+	//winrt::check_hresult(dcompTarget->SetRoot(dcompVisual.get()));
+	//winrt::check_hresult(dcompDevice->Commit());
+
+	winrt::check_hresult(factory->CreateSwapChainForHwnd(
 		m_commandQueue.get(),        // Swap chain needs the queue so that it can force a flush on it.
+		hwnd,
 		&swapChainDesc,
+		nullptr,
 		nullptr,
 		swapChain.put()
 	));
 
-
-	winrt::check_hresult(DCompositionCreateDevice(nullptr, IID_PPV_ARGS(&dcompDevice)));
-	winrt::check_hresult(dcompDevice->CreateTargetForHwnd(hwnd, true, dcompTarget.put()));
-	winrt::check_hresult(dcompDevice->CreateVisual(dcompVisual.put()));
-	winrt::check_hresult(dcompVisual->SetContent(swapChain.get()));
-	winrt::check_hresult(dcompTarget->SetRoot(dcompVisual.get()));
-	winrt::check_hresult(dcompDevice->Commit());
 
 	// This sample does not support fullscreen transitions.
 	//winrt::check_hresult(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
@@ -106,8 +116,16 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 
 
 	// Create root signature.
+	CD3DX12_DESCRIPTOR_RANGE1 descRange[1];
+	descRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
+	CD3DX12_ROOT_PARAMETER1 rootParameter[1];
+	//rootParameter[0].InitAsDescriptorTable(1, descRange);
+	rootParameter[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC);
+
+
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc;
-	versionedRootSignatureDesc.Init_1_1(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	versionedRootSignatureDesc.Init_1_1(1, rootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	winrt::com_ptr<ID3DBlob> signature;
 	winrt::com_ptr<ID3DBlob> error;
@@ -193,6 +211,19 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 		m_vertexBufferView.SizeInBytes = vertexBufferSize;
 	}
 
+	// Create resource heap.
+	{
+		m_cbvResourceSize = (sizeof(DirectX::SimpleMath::Matrix) + 255) & ~255;
+		m_resourceHeap = CreateResourceHeap();
+		UINT8* data;
+		DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::Identity;
+		CD3DX12_RANGE readRange(0, 0);
+		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
+		memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
+		m_cbvResource->Unmap(0, nullptr);
+	}
+
+
 	// Create synchronization objects.
 	{
 		winrt::check_hresult(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
@@ -244,7 +275,11 @@ void Vortex::Renderer::PopulateCommandList()
 	// re-recording.
 	winrt::check_hresult(m_commandList->Reset(m_commandAllocator.get(), m_pipelineState.get()));
 
+	ID3D12DescriptorHeap* heaps[] = { m_resourceHeap.get() };
+	m_commandList->SetDescriptorHeaps(1, heaps);
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
+	m_commandList->SetGraphicsRootConstantBufferView(0, m_cbvResource->GetGPUVirtualAddress());
+	//m_commandList->SetGraphicsRootDescriptorTable(0, m_resourceHeap->GetGPUDescriptorHandleForHeapStart());
 	m_commandList->RSSetViewports(1, &m_viewport);
 	m_commandList->RSSetScissorRects(1, &m_scissorRect);
 
@@ -300,6 +335,8 @@ winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateResourceHeap()
 	descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	winrt::check_hresult(m_device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&resourceHeap)));
 
+	INT descriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE descriptorHandle(resourceHeap->GetCPUDescriptorHandleForHeapStart());
 	// Constant buffer view
 	{
 		D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -312,65 +349,69 @@ winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateResourceHeap()
 			nullptr,
 			IID_PPV_ARGS(&m_cbvResource)
 		));
+		m_cbvResource->SetName(L"CBV resource");
 
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 		cbvDesc.BufferLocation = m_cbvResource->GetGPUVirtualAddress();
 		cbvDesc.SizeInBytes = m_cbvResourceSize;
-		m_device->CreateConstantBufferView(&cbvDesc, resourceHeap->GetCPUDescriptorHandleForHeapStart());
+		m_device->CreateConstantBufferView(&cbvDesc, descriptorHandle);
 	}
+	descriptorHandle.Offset(1, descriptorSize);
 
-	// Shader resource view
-	{
-		D3D12_SUBRESOURCE_DATA subresourceData;
-		std::unique_ptr<uint8_t[]> decodedData;
-		winrt::check_hresult(DirectX::LoadWICTextureFromFile(m_device.get(), m_textureFilename.c_str(), m_srvResource.put(), decodedData, subresourceData));
+	//// Shader resource view
+	//{
+	//	D3D12_SUBRESOURCE_DATA subresourceData;
+	//	std::unique_ptr<uint8_t[]> decodedData;
+	//	winrt::check_hresult(DirectX::LoadWICTextureFromFile(m_device.get(), m_textureFilename.c_str(), m_srvResource.put(), decodedData, subresourceData));
 
-		D3D12_RESOURCE_DESC textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1024, 1024);
-		D3D12_HEAP_PROPERTIES defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-		winrt::check_hresult(m_device->CreateCommittedResource(
-			&defaultHeapProperties,
-			D3D12_HEAP_FLAG_NONE,
-			&textureDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,
-			nullptr,
-			IID_PPV_ARGS(&m_srvResource)
-		));
-
-
-		winrt::com_ptr<ID3D12Resource> uploadResource;
-		D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_srvResource.get(), 0, 1);
-		D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-		winrt::check_hresult(m_device->CreateCommittedResource(
-			&uploadHeapProperties,
-			D3D12_HEAP_FLAG_NONE,
-			&bufferDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&uploadResource)
-		));
+	//	D3D12_RESOURCE_DESC textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1024, 1024);
+	//	D3D12_HEAP_PROPERTIES defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	//	winrt::check_hresult(m_device->CreateCommittedResource(
+	//		&defaultHeapProperties,
+	//		D3D12_HEAP_FLAG_NONE,
+	//		&textureDesc,
+	//		D3D12_RESOURCE_STATE_COPY_DEST,
+	//		nullptr,
+	//		IID_PPV_ARGS(&m_srvResource)
+	//	));
 
 
-		UpdateSubresources(m_commandList.get(), m_srvResource.get(), uploadResource.get(), 0, 0, 1, &subresourceData);
+	//	winrt::com_ptr<ID3D12Resource> uploadResource;
+	//	D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	//	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_srvResource.get(), 0, 1);
+	//	D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+	//	winrt::check_hresult(m_device->CreateCommittedResource(
+	//		&uploadHeapProperties,
+	//		D3D12_HEAP_FLAG_NONE,
+	//		&bufferDesc,
+	//		D3D12_RESOURCE_STATE_GENERIC_READ,
+	//		nullptr,
+	//		IID_PPV_ARGS(&uploadResource)
+	//	));
 
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Format = textureDesc.Format;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Texture2D.MostDetailedMip = 0;
-		srvDesc.Texture2D.MipLevels = 1;
-		m_device->CreateShaderResourceView(m_srvResource.get(), &srvDesc, resourceHeap->GetCPUDescriptorHandleForHeapStart());
-	}
 
-	// Unordered access view
-	{
-		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-		uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-		uavDesc.Buffer.FirstElement = 0;
-		uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-		m_device->CreateUnorderedAccessView(m_uavResource.get(), nullptr, &uavDesc, resourceHeap->GetCPUDescriptorHandleForHeapStart());
-	}
+	//	UpdateSubresources(m_commandList.get(), m_srvResource.get(), uploadResource.get(), 0, 0, 1, &subresourceData);
+
+	//	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	//	srvDesc.Format = textureDesc.Format;
+	//	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	//	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	//	srvDesc.Texture2D.MostDetailedMip = 0;
+	//	srvDesc.Texture2D.MipLevels = 1;
+	//	m_device->CreateShaderResourceView(m_srvResource.get(), &srvDesc, descriptorHandle);
+	//}
+	//descriptorHandle.Offset(1, descriptorSize);
+
+	//// Unordered access view
+	//{
+	//	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	//	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	//	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	//	uavDesc.Buffer.FirstElement = 0;
+	//	uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+	//	m_device->CreateUnorderedAccessView(m_uavResource.get(), nullptr, &uavDesc, descriptorHandle);
+	//}
+	//descriptorHandle.Offset(1, descriptorSize);
 
 
 	return resourceHeap;
@@ -388,3 +429,16 @@ winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateSamplerHeap()
 	return m_cbvHeap;
 }
 
+// Create descriptor heaps.
+winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateRTVHeap()
+{
+	// Describe and create a render target view (RTV) descriptor heap.
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = FrameCount;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	winrt::check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+
+	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	return m_rtvHeap;
+}
