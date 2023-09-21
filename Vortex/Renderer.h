@@ -2,7 +2,7 @@
 
 namespace Vortex
 {
-	class VORTEX_API Renderer
+	class Renderer
 	{
 	public:
 		Renderer() = delete;

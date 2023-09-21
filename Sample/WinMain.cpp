@@ -79,6 +79,10 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
 {
 	winrt::init_apartment(winrt::apartment_type::single_threaded);
 	int result = ::MessageBox(::GetDesktopWindow(), L"Enter Vortex?", L"Sample", MB_YESNO | MB_ICONQUESTION);
+	if (result == IDNO)
+	{
+		return 0;
+	}
 	WNDCLASSEX windowClass = { 0 };
 	windowClass.cbSize = sizeof(WNDCLASSEX);
 	windowClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -114,19 +118,16 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
 
 	winrt::check_bool(bool(hwnd));
 
-	if (result == IDYES)
+	::ShowWindow(static_cast<HWND>(hwnd.detach()), nCmdShow);
+	// Main sample loop.
+	MSG msg = {};
+	while (msg.message != WM_QUIT)
 	{
-		::ShowWindow(static_cast<HWND>(hwnd.detach()), nCmdShow);
-		// Main sample loop.
-		MSG msg = {};
-		while (msg.message != WM_QUIT)
+		// Process any messages in the queue.
+		if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			// Process any messages in the queue.
-			if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				::TranslateMessage(&msg);
-				::DispatchMessage(&msg);
-			}
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
 		}
 	}
 

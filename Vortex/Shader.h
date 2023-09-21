@@ -2,7 +2,7 @@
 
 namespace Vortex
 {
-	class VORTEX_API Shader
+	class Shader
 	{
 	public:
 		enum Type

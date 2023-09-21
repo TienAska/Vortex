@@ -2,7 +2,7 @@
 
 namespace Vortex
 {
-	class VORTEX_API DeviceManager
+	class DeviceManager
 	{
 	public:
 		static DeviceManager& Instance()
