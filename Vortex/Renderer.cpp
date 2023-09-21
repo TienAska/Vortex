@@ -1,40 +1,47 @@
 #include "pch.h"
 
 #include "Renderer.h"
+#include "DeviceManager.h"
 #include "Shader.h"
+
+
+extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 610; }
+
+extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
 
 Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width), m_height(height)
 {
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
 	m_scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height));
 
-	UINT dxgiFactoryFlags = 0;
 
 	m_textureFilename = L"Assets/Textures/Fabric_DishCloth_D.tif";
 
-#if defined(_DEBUG)
-	// Enable the debug layer (requires the Graphics Tools "optional feature").
-	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
-	{
-		winrt::com_ptr<ID3D12Debug> debugController;
-		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-		{
-			debugController->EnableDebugLayer();
-
-			// Enable additional debug layers.
-			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-		}
-	}
-#endif
-
-	winrt::com_ptr<IDXGIFactory6> factory;
-	winrt::check_hresult(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
-	winrt::com_ptr<IDXGIAdapter> hardwareAdapter;
-
-	if (SUCCEEDED(factory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&hardwareAdapter))))
-	{
-		winrt::check_hresult(D3D12CreateDevice(hardwareAdapter.get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_device)));
-	}
+//	UINT dxgiFactoryFlags = 0;
+//#if defined(_DEBUG)
+//	// Enable the debug layer (requires the Graphics Tools "optional feature").
+//	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
+//	{
+//		winrt::com_ptr<ID3D12Debug> debugController;
+//		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+//		{
+//			debugController->EnableDebugLayer();
+//
+//			// Enable additional debug layers.
+//			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+//		}
+//	}
+//#endif
+//
+//	winrt::com_ptr<IDXGIFactory6> factory;
+//	winrt::check_hresult(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
+//	winrt::com_ptr<IDXGIAdapter> hardwareAdapter;
+//
+//	if (SUCCEEDED(factory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&hardwareAdapter))))
+//	{
+//		winrt::check_hresult(D3D12CreateDevice(hardwareAdapter.get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_device)));
+//	}
+	m_device = DeviceManager::GetDevice();
 
 	// Describe and create the command queue.
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -71,6 +78,7 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	//winrt::check_hresult(dcompTarget->SetRoot(dcompVisual.get()));
 	//winrt::check_hresult(dcompDevice->Commit());
 
+	winrt::com_ptr<IDXGIFactory6> factory = DeviceManager::GetFactory();
 	winrt::check_hresult(factory->CreateSwapChainForHwnd(
 		m_commandQueue.get(),        // Swap chain needs the queue so that it can force a flush on it.
 		hwnd,

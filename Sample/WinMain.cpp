@@ -1,8 +1,5 @@
 ﻿#include "pch.h"
 
-extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 610; }
-
-extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
 
 
 //using namespace winrt;
@@ -12,9 +9,9 @@ extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12
 
 
 #include <Vortex.h>
-#include <Renderer.h>
+#include <SimpleRenderer.h>
 
-std::shared_ptr<Vortex::Renderer> g_renderer;
+std::shared_ptr<SimpleRenderer> g_renderer;
 
 //CompositionHost* compHost = CompositionHost::GetInstance();
 
@@ -111,7 +108,7 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
 	RECT rect;
 	winrt::check_hresult(::GetWindowRect(static_cast<HWND>(hwnd.get()), &rect));
 
-	g_renderer = std::make_shared<Vortex::Renderer>(static_cast<HWND>(hwnd.get()), rect.right - rect.left, rect.bottom - rect.top);
+	g_renderer = std::make_shared<SimpleRenderer>(static_cast<HWND>(hwnd.get()), rect.right - rect.left, rect.bottom - rect.top);
 
 
 
