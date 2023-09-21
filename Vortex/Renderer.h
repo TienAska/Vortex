@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Camera.h"
+
 namespace Vortex
 {
 	class Renderer
@@ -12,6 +14,7 @@ namespace Vortex
 
 		void Update();
 		void Render();
+		Camera& GetCameraRef() { return m_camera; }
 
 		void PopulateCommandList();
 
@@ -73,42 +76,45 @@ namespace Vortex
 		UINT m_height;
 
 
-		inline HRESULT ReadDataFromFile(LPCWSTR filename, BYTE** data, UINT* size)
-		{
-			CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
-			extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
-			extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
-			extendedParams.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
-			extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
-			extendedParams.lpSecurityAttributes = nullptr;
-			extendedParams.hTemplateFile = nullptr;
+		// Objects
+		Camera m_camera;
 
-			winrt::file_handle file(CreateFile2(filename, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
-			if (file.get() == INVALID_HANDLE_VALUE)
-			{
-				throw std::exception();
-			}
+		//inline HRESULT ReadDataFromFile(LPCWSTR filename, BYTE** data, UINT* size)
+		//{
+		//	CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
+		//	extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+		//	extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+		//	extendedParams.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
+		//	extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+		//	extendedParams.lpSecurityAttributes = nullptr;
+		//	extendedParams.hTemplateFile = nullptr;
 
-			FILE_STANDARD_INFO fileInfo = {};
-			if (!GetFileInformationByHandleEx(file.get(), FileStandardInfo, &fileInfo, sizeof(fileInfo)))
-			{
-				throw std::exception();
-			}
+		//	winrt::file_handle file(CreateFile2(filename, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
+		//	if (file.get() == INVALID_HANDLE_VALUE)
+		//	{
+		//		throw std::exception();
+		//	}
 
-			if (fileInfo.EndOfFile.HighPart != 0)
-			{
-				throw std::exception();
-			}
+		//	FILE_STANDARD_INFO fileInfo = {};
+		//	if (!GetFileInformationByHandleEx(file.get(), FileStandardInfo, &fileInfo, sizeof(fileInfo)))
+		//	{
+		//		throw std::exception();
+		//	}
 
-			*data = reinterpret_cast<byte*>(malloc(fileInfo.EndOfFile.LowPart));
-			*size = fileInfo.EndOfFile.LowPart;
+		//	if (fileInfo.EndOfFile.HighPart != 0)
+		//	{
+		//		throw std::exception();
+		//	}
 
-			if (!ReadFile(file.get(), *data, fileInfo.EndOfFile.LowPart, nullptr, nullptr))
-			{
-				throw std::exception();
-			}
+		//	*data = reinterpret_cast<byte*>(malloc(fileInfo.EndOfFile.LowPart));
+		//	*size = fileInfo.EndOfFile.LowPart;
 
-			return S_OK;
-		}
+		//	if (!ReadFile(file.get(), *data, fileInfo.EndOfFile.LowPart, nullptr, nullptr))
+		//	{
+		//		throw std::exception();
+		//	}
+
+		//	return S_OK;
+		//}
 	};
 }

@@ -23,3 +23,18 @@ void SimpleRenderer::Render()
 {
 	m_renderer->Render();
 }
+
+void SimpleRenderer::MoveForward(float offset)
+{
+	m_renderer->GetCameraRef().MoveForward(offset);
+}
+
+void SimpleRenderer::MoveRight(float offset)
+{
+	m_renderer->GetCameraRef().MoveRight(offset);
+}
+
+void SimpleRenderer::MoveUp(float offset)
+{
+	m_renderer->GetCameraRef().MoveUp(offset);
+}

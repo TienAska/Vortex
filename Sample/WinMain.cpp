@@ -33,27 +33,27 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 	return 0;
 
 	case WM_KEYDOWN:
-		//switch (key)
-		//{
-		//case 'w':
-		//	camera->MoveForward(1.0f);
-		//	break;
-		//case 's':
-		//	camera->MoveForward(-1.0f);
-		//	break;
-		//case 'd':
-		//	camera->MoveRight(1.0f);
-		//	break;
-		//case 'a':
-		//	camera->MoveRight(-1.0f);
-		//	break;
-		//case 'e':
-		//	camera->MoveUp(1.0f);
-		//	break;
-		//case 'q':
-		//	camera->MoveUp(-1.0f);
-		//	break;
-		//}
+		switch (wParam)
+		{
+		case 'W':
+			g_renderer->MoveForward(1.0f);
+			break;
+		case 'S':
+			g_renderer->MoveForward(-1.0f);
+			break;
+		case 'D':
+			g_renderer->MoveRight(1.0f);
+			break;
+		case 'A':
+			g_renderer->MoveRight(-1.0f);
+			break;
+		case 'E':
+			g_renderer->MoveUp(1.0f);
+			break;
+		case 'Q':
+			g_renderer->MoveUp(-1.0f);
+			break;
+		}
 		return 0;
 	case WM_KEYUP:
 		return 0;

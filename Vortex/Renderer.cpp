@@ -5,15 +5,14 @@
 #include "Shader.h"
 
 
-extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 610; }
-
-extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
+//extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 610; }
+//
+//extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
 
 Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width), m_height(height)
 {
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
 	m_scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height));
-
 
 	m_textureFilename = L"Assets/Textures/Fabric_DishCloth_D.tif";
 
@@ -199,12 +198,6 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	{
 		m_cbvResourceSize = (sizeof(DirectX::SimpleMath::Matrix) + 255) & ~255;
 		m_resourceHeap = CreateResourceHeap();
-		UINT8* data;
-		DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(2.0f);
-		CD3DX12_RANGE readRange(0, 0);
-		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
-		memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
-		m_cbvResource->Unmap(0, nullptr);
 	}
 
 
@@ -234,9 +227,10 @@ Vortex::Renderer::~Renderer()
 
 void Vortex::Renderer::Update()
 {
-	static int size = 1.0;
+	static int size = 1;
 	UINT8* data;
 	DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
+	world = m_camera.GetViewMatrix();
 	CD3DX12_RANGE readRange(0, 0);
 	winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
 	memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
