@@ -14,6 +14,11 @@ SimpleRenderer::~SimpleRenderer()
 	m_renderer.reset();
 }
 
+void SimpleRenderer::Update()
+{
+	m_renderer->Update();
+}
+
 void SimpleRenderer::Render()
 {
 	m_renderer->Render();

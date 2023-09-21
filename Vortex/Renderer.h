@@ -10,8 +10,8 @@ namespace Vortex
 		Renderer(HWND hwnd, UINT width, UINT height);
 		~Renderer();
 
+		void Update();
 		void Render();
-
 
 		void PopulateCommandList();
 

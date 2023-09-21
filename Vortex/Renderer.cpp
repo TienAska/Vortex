@@ -17,30 +17,6 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 
 	m_textureFilename = L"Assets/Textures/Fabric_DishCloth_D.tif";
 
-//	UINT dxgiFactoryFlags = 0;
-//#if defined(_DEBUG)
-//	// Enable the debug layer (requires the Graphics Tools "optional feature").
-//	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
-//	{
-//		winrt::com_ptr<ID3D12Debug> debugController;
-//		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-//		{
-//			debugController->EnableDebugLayer();
-//
-//			// Enable additional debug layers.
-//			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-//		}
-//	}
-//#endif
-//
-//	winrt::com_ptr<IDXGIFactory6> factory;
-//	winrt::check_hresult(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
-//	winrt::com_ptr<IDXGIAdapter> hardwareAdapter;
-//
-//	if (SUCCEEDED(factory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&hardwareAdapter))))
-//	{
-//		winrt::check_hresult(D3D12CreateDevice(hardwareAdapter.get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_device)));
-//	}
 	m_device = DeviceManager::GetDevice();
 
 	// Describe and create the command queue.
@@ -224,7 +200,7 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 		m_cbvResourceSize = (sizeof(DirectX::SimpleMath::Matrix) + 255) & ~255;
 		m_resourceHeap = CreateResourceHeap();
 		UINT8* data;
-		DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::Identity;
+		DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(2.0f);
 		CD3DX12_RANGE readRange(0, 0);
 		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
 		memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
@@ -254,6 +230,18 @@ Vortex::Renderer::~Renderer()
 	WaitForPreviousFrame();
 
 	CloseHandle(m_fenceEvent);
+}
+
+void Vortex::Renderer::Update()
+{
+	static int size = 1.0;
+	UINT8* data;
+	DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
+	CD3DX12_RANGE readRange(0, 0);
+	winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
+	memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
+	m_cbvResource->Unmap(0, nullptr);
+	size++;
 }
 
 void Vortex::Renderer::Render()

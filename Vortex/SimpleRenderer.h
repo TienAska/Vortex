@@ -11,6 +11,7 @@ public:
 	SimpleRenderer(HWND hwnd, UINT width, UINT height);
 	~SimpleRenderer();
 
+	void Update();
 	void Render();
 
 private:

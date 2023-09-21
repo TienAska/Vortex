@@ -62,6 +62,7 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 		//camera->Update();
 		if (g_renderer)
 		{
+			g_renderer->Update();
 			g_renderer->Render();
 		}
 		return 0;

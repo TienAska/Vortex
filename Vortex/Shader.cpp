@@ -99,8 +99,8 @@ void Vortex::Shader::Compile()
 	LPCWSTR args[]{
 		L"-Fo", m_cacheFilename.c_str(),
 #if defined(_DEBUG)
-			DXC_ARG_DEBUG,
-			DXC_ARG_SKIP_OPTIMIZATIONS,
+		DXC_ARG_DEBUG,
+		DXC_ARG_SKIP_OPTIMIZATIONS,
 #endif
 	};
 	LPCWSTR target = nullptr;
