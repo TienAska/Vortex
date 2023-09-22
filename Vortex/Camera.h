@@ -9,7 +9,7 @@ namespace Vortex
 
 		DirectX::SimpleMath::Matrix GetViewMatrix()
 		{
-			return DirectX::SimpleMath::Matrix::CreateTranslation(m_Position) * DirectX::SimpleMath::Matrix::CreateFromQuaternion(m_Rotation).Invert();
+			return DirectX::SimpleMath::Matrix::CreateTranslation(-m_Position).Transpose() * DirectX::SimpleMath::Matrix::CreateFromQuaternion(m_Rotation);
 		}
 
 		DirectX::SimpleMath::Matrix GetProjectionMatrix()
@@ -46,7 +46,7 @@ namespace Vortex
 
 		Camera& MoveForward(float offset)
 		{
-			DirectX::SimpleMath::Vector3 direction = DirectX::SimpleMath::Vector3::Transform(DirectX::SimpleMath::Vector3(0.0f, 0.0f, -1.0f), m_Rotation);
+			DirectX::SimpleMath::Vector3 direction = DirectX::SimpleMath::Vector3::Transform(DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f), m_Rotation);
 			m_Position += direction * offset;
 			return *this;
 		}
@@ -60,7 +60,7 @@ namespace Vortex
 
 		Camera& MoveUp(float offset)
 		{
-			DirectX::SimpleMath::Vector3 direction = m_Rotation * DirectX::SimpleMath::Vector3(0.0f, -1.0f, 0.0f);
+			DirectX::SimpleMath::Vector3 direction = DirectX::SimpleMath::Vector3::Transform(DirectX::SimpleMath::Vector3(0.0f, 1.0f, 0.0f), m_Rotation);
 			m_Position += direction * offset;
 			return *this;
 		}
@@ -68,7 +68,10 @@ namespace Vortex
 		Camera& Rotate(float pitch, float yaw)
 		{
 			//m_Rotation = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3(0.0f, 1.0f, 0.0f), DirectX::XMConvertToRadians(-yaw * 0.1f)) * DirectX::SimpleMath::Quaternion::FromToRotation() rotate(m_Rotation, glm::radians(pitch * 0.1f), DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f));
-			m_Rotation = DirectX::SimpleMath::Quaternion::CreateFromYawPitchRoll(yaw, pitch, 0.0f);
+			DirectX::SimpleMath::Quaternion rotation = DirectX::SimpleMath::Quaternion::CreateFromYawPitchRoll(yaw, pitch, 0.0f);
+			m_forward = DirectX::SimpleMath::Vector3::Transform(m_forward, rotation);
+			m_up = DirectX::SimpleMath::Vector3::Transform(m_up, rotation);
+			m_Rotation = DirectX::SimpleMath::Quaternion::LookRotation(m_forward, m_up);
 			return *this;
 		}
 
@@ -77,6 +80,8 @@ namespace Vortex
 		float m_Aspect = 16.0f / 9.0f;
 
 		DirectX::SimpleMath::Vector3 m_Position;
+		DirectX::SimpleMath::Vector3 m_forward;
+		DirectX::SimpleMath::Vector3 m_up;
 		DirectX::SimpleMath::Quaternion m_Rotation;
 
 		DirectX::SimpleMath::Matrix m_ProjectionMatrix;

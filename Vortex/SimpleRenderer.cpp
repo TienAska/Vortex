@@ -26,15 +26,25 @@ void SimpleRenderer::Render()
 
 void SimpleRenderer::MoveForward(float offset)
 {
-	m_renderer->GetCameraRef().MoveForward(offset);
+	m_renderer->GetCameraRef().MoveForward(offset * m_speed);
 }
 
 void SimpleRenderer::MoveRight(float offset)
 {
-	m_renderer->GetCameraRef().MoveRight(offset);
+	m_renderer->GetCameraRef().MoveRight(offset * m_speed);
 }
 
 void SimpleRenderer::MoveUp(float offset)
 {
-	m_renderer->GetCameraRef().MoveUp(offset);
+	m_renderer->GetCameraRef().MoveUp(offset * m_speed);
+}
+
+void SimpleRenderer::RotateX(float offset)
+{
+	m_renderer->GetCameraRef().Rotate(offset * m_speed, 0.0f);
+}
+
+void SimpleRenderer::RotateY(float offset)
+{
+	m_renderer->GetCameraRef().Rotate(0.0f * m_speed, offset);
 }

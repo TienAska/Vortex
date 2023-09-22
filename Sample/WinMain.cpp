@@ -53,6 +53,18 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 		case 'Q':
 			g_renderer->MoveUp(-1.0f);
 			break;
+		case VK_UP:
+			g_renderer->RotateX(-1.0f);
+			break;
+		case VK_DOWN:
+			g_renderer->RotateX(1.0f);
+			break;
+		case VK_RIGHT:
+			g_renderer->RotateY(1.0f);
+			break;
+		case VK_LEFT:
+			g_renderer->RotateY(-1.0f);
+			break;
 		}
 		return 0;
 	case WM_KEYUP:
