@@ -230,7 +230,7 @@ void Vortex::Renderer::Update()
 	static int size = 1;
 	UINT8* data;
 	DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
-	world = m_camera.GetViewMatrix();
+	world = m_camera.GetViewMatrix().Transpose();
 	CD3DX12_RANGE readRange(0, 0);
 	winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
 	memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
