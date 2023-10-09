@@ -213,6 +213,9 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 			winrt::check_hresult(HRESULT_FROM_WIN32(GetLastError()));
 		}
 	}
+
+
+	winrt::check_hresult(GameInputCreate(m_gameInput.put()));
 }
 
 Vortex::Renderer::~Renderer()
@@ -223,19 +226,45 @@ Vortex::Renderer::~Renderer()
 	WaitForPreviousFrame();
 
 	CloseHandle(m_fenceEvent);
+
+	m_gameInput.detach();
 }
 
 void Vortex::Renderer::Update()
 {
-	static int size = 1;
-	UINT8* data;
-	DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
-	world = m_camera.GetViewMatrix().Transpose();
-	CD3DX12_RANGE readRange(0, 0);
-	winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
-	memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
-	m_cbvResource->Unmap(0, nullptr);
-	size++;
+	// Get input.
+	IGameInputReading* reading;
+	if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard, m_gameKeyboard.get(), &reading)))
+	{
+		if (!m_gameKeyboard) reading->GetDevice(m_gameKeyboard.put());
+
+		auto state = std::vector<GameInputKeyState>(reading->GetKeyCount());
+		reading->GetKeyState(state.size(), state.data());
+		reading->Release();
+
+		if (!state.empty() && state.front().virtualKey != '\0') 
+		{
+			// Update matrix to gpu.
+			static int size = 1;
+			UINT8* data;
+			DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
+			world = m_camera.GetViewMatrix().Transpose();
+			CD3DX12_RANGE readRange(0, 0);
+			winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
+			memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
+			m_cbvResource->Unmap(0, nullptr);
+			size++;
+		}
+	}
+
+	// If an error is returned from GetCurrentReading(), it means the
+	// gamepad we were reading from has disconnected. Reset the
+	// device pointer, and go back to looking for an active gamepad.
+	else if (m_gameKeyboard)
+	{
+		m_gameKeyboard->Release();
+		m_gameKeyboard.detach();
+	}
 }
 
 void Vortex::Renderer::Render()

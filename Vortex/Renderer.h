@@ -79,6 +79,10 @@ namespace Vortex
 		// Objects
 		Camera m_camera;
 
+		// Input
+		winrt::com_ptr<IGameInput> m_gameInput;
+		winrt::com_ptr<IGameInputDevice> m_gameKeyboard;
+
 		//inline HRESULT ReadDataFromFile(LPCWSTR filename, BYTE** data, UINT* size)
 		//{
 		//	CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};

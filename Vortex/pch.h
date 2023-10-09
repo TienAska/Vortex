@@ -28,5 +28,6 @@
 #include <DispatcherQueue.h>
 #include <dcomp.h>
 #include <WICTextureLoader.h>
+#include <GameInput.h>
 
 #include "Vortex.h"
