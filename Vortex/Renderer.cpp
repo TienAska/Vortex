@@ -216,6 +216,7 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 
 
 	winrt::check_hresult(GameInputCreate(m_gameInput.put()));
+	//winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
 }
 
 Vortex::Renderer::~Renderer()
@@ -227,6 +228,7 @@ Vortex::Renderer::~Renderer()
 
 	CloseHandle(m_fenceEvent);
 
+	m_gameInput->Release();
 	m_gameInput.detach();
 }
 
@@ -234,36 +236,48 @@ void Vortex::Renderer::Update()
 {
 	// Get input.
 	IGameInputReading* reading;
-	if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard, m_gameKeyboard.get(), &reading)))
+	if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard | GameInputKindMouse, nullptr, &reading)))
 	{
-		if (!m_gameKeyboard) reading->GetDevice(m_gameKeyboard.put());
+		if (!m_gameDevice) reading->GetDevice(m_gameDevice.put());
 
-		auto state = std::vector<GameInputKeyState>(reading->GetKeyCount());
-		reading->GetKeyState(state.size(), state.data());
+		std::vector<GameInputKeyState> keyState(reading->GetKeyCount());
+		reading->GetKeyState(static_cast<uint32_t>(keyState.size()), keyState.data());
+
+		GameInputMouseState mouseState;
+		if (reading->GetMouseState(&mouseState))
+		{
+			static GameInputMouseState lastState;
+			static float sensitivity = 0.1f;
+			if (mouseState.buttons & GameInputMouseRightButton)
+			{
+				float yaw = (mouseState.positionX - lastState.positionX) * sensitivity;
+				float pitch = (mouseState.positionY - lastState.positionY) * 0;
+				lastState = mouseState;
+				m_camera.Rotate(pitch, yaw);
+			}
+		}
+
+		if (!keyState.empty() && keyState.front().virtualKey != '\0')
+		{
+		}
 		reading->Release();
 
-		if (!state.empty() && state.front().virtualKey != '\0') 
-		{
-			// Update matrix to gpu.
-			static int size = 1;
-			UINT8* data;
-			DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
-			world = m_camera.GetViewMatrix().Transpose();
-			CD3DX12_RANGE readRange(0, 0);
-			winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
-			memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
-			m_cbvResource->Unmap(0, nullptr);
-			size++;
-		}
+		// Update matrix to gpu.
+		static int size = 1;
+		UINT8* data;
+		DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
+		world = m_camera.GetViewMatrix().Transpose();
+		CD3DX12_RANGE readRange(0, 0);
+		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
+		memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
+		m_cbvResource->Unmap(0, nullptr);
+		size++;
 	}
 
-	// If an error is returned from GetCurrentReading(), it means the
-	// gamepad we were reading from has disconnected. Reset the
-	// device pointer, and go back to looking for an active gamepad.
-	else if (m_gameKeyboard)
+	else if (m_gameDevice)
 	{
-		m_gameKeyboard->Release();
-		m_gameKeyboard.detach();
+		m_gameDevice->Release();
+		m_gameDevice.detach();
 	}
 }
 

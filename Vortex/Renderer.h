@@ -81,7 +81,7 @@ namespace Vortex
 
 		// Input
 		winrt::com_ptr<IGameInput> m_gameInput;
-		winrt::com_ptr<IGameInputDevice> m_gameKeyboard;
+		winrt::com_ptr<IGameInputDevice> m_gameDevice;
 
 		//inline HRESULT ReadDataFromFile(LPCWSTR filename, BYTE** data, UINT* size)
 		//{

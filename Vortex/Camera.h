@@ -64,8 +64,9 @@ namespace Vortex
 
 		Camera& Rotate(float pitch, float yaw)
 		{
+			
 			//m_Rotation = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3(0.0f, 1.0f, 0.0f), DirectX::XMConvertToRadians(-yaw * 0.1f)) * DirectX::SimpleMath::Quaternion::FromToRotation() rotate(m_Rotation, glm::radians(pitch * 0.1f), DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f));
-			DirectX::SimpleMath::Quaternion rotation = DirectX::SimpleMath::Quaternion::CreateFromYawPitchRoll(yaw, pitch, 0.0f);
+			DirectX::SimpleMath::Quaternion rotation = DirectX::SimpleMath::Quaternion::CreateFromYawPitchRoll(DirectX::XMConvertToRadians(yaw), DirectX::XMConvertToRadians(pitch), 0.0f);
 			m_forward = DirectX::SimpleMath::Vector3::Transform(m_forward, rotation);
 			m_up = DirectX::SimpleMath::Vector3::Transform(m_up, rotation);
 			m_right = DirectX::SimpleMath::Vector3::Transform(m_right, rotation);
