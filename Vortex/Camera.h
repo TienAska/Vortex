@@ -9,6 +9,10 @@ namespace Vortex
 
 		DirectX::SimpleMath::Matrix GetViewMatrix()
 		{
+			//DirectX::SimpleMath::Matrix view;
+			//view.Translation(m_Position);
+			//view = DirectX::SimpleMath::Matrix::Transform(view, m_Rotation).Invert();
+			//return view;
 			return DirectX::XMMatrixLookToLH(m_Position, m_forward, m_up);
 		}
 
@@ -19,7 +23,7 @@ namespace Vortex
 
 		DirectX::SimpleMath::Matrix GetViewProjection()
 		{
-			return m_ProjectionMatrix * GetViewMatrix();
+			return GetViewMatrix() * m_ProjectionMatrix;
 		}
 
 		//DirectX::SimpleMath::Matrix GetRotationMatrix()
@@ -65,16 +69,22 @@ namespace Vortex
 		Camera& Rotate(float pitch, float yaw)
 		{
 			
-			//m_Rotation = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3(0.0f, 1.0f, 0.0f), DirectX::XMConvertToRadians(-yaw * 0.1f)) * DirectX::SimpleMath::Quaternion::FromToRotation() rotate(m_Rotation, glm::radians(pitch * 0.1f), DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f));
 			DirectX::SimpleMath::Quaternion rotation = DirectX::SimpleMath::Quaternion::CreateFromYawPitchRoll(DirectX::XMConvertToRadians(yaw), DirectX::XMConvertToRadians(pitch), 0.0f);
+			//DirectX::SimpleMath::Quaternion rotation = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(m_right, DirectX::XMConvertToRadians(pitch));
 			m_forward = DirectX::SimpleMath::Vector3::Transform(m_forward, rotation);
 			m_up = DirectX::SimpleMath::Vector3::Transform(m_up, rotation);
 			m_right = DirectX::SimpleMath::Vector3::Transform(m_right, rotation);
-			//m_Rotation = DirectX::SimpleMath::Quaternion::LookRotation(m_forward, m_up);
+			//m_Rotation *= rotation;
+
 			return *this;
 		}
 
 	private:
+		void UpdateMatrix()
+		{
+			m_ViewMatrix = DirectX::XMMatrixLookToLH(m_Position, m_forward, m_up);
+		}
+
 		float m_VFoV = DirectX::XM_PIDIV4;
 		float m_Aspect = 16.0f / 9.0f;
 
@@ -82,7 +92,9 @@ namespace Vortex
 		DirectX::SimpleMath::Vector3 m_forward;
 		DirectX::SimpleMath::Vector3 m_up;
 		DirectX::SimpleMath::Vector3 m_right;
+		DirectX::SimpleMath::Quaternion m_Rotation;
 
+		DirectX::SimpleMath::Matrix m_ViewMatrix;
 		DirectX::SimpleMath::Matrix m_ProjectionMatrix;
 	};
 }

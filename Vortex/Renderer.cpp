@@ -251,9 +251,10 @@ void Vortex::Renderer::Update()
 			if (mouseState.buttons & GameInputMouseRightButton)
 			{
 				float yaw = (mouseState.positionX - lastState.positionX) * sensitivity;
-				float pitch = (mouseState.positionY - lastState.positionY) * 0;
+				float pitch = (mouseState.positionY - lastState.positionY) * sensitivity;
 				lastState = mouseState;
-				m_camera.Rotate(pitch, yaw);
+				m_camera.Rotate(0.0f, yaw);
+				m_camera.Rotate(pitch, 0.0f);
 			}
 		}
 
@@ -266,7 +267,7 @@ void Vortex::Renderer::Update()
 		static int size = 1;
 		UINT8* data;
 		DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
-		world = m_camera.GetViewMatrix().Transpose();
+		world = m_camera.GetViewProjection().Transpose();
 		CD3DX12_RANGE readRange(0, 0);
 		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
 		memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
