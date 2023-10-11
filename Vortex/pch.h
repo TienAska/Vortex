@@ -18,6 +18,8 @@
 #include <windows.ui.composition.interop.h>
 
 
+#include <fstream>
+#include <filesystem>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -29,5 +31,8 @@
 #include <dcomp.h>
 #include <WICTextureLoader.h>
 #include <GameInput.h>
+
+#include <GLTFSDK/GLBResourceReader.h>
+#include <GLTFSDK/Deserialize.h>
 
 #include "Vortex.h"

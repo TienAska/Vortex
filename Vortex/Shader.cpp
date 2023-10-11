@@ -2,8 +2,6 @@
 
 #include "Shader.h"
 
-#include <fstream>
-#include <filesystem>
 
 
 const winrt::hstring Vortex::Shader::s_shaderFolder = L"Assets/Shaders";
