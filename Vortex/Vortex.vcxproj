@@ -111,7 +111,9 @@
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Shaders\Triangle.hlsli" />
+    <CopyFileToFolders Include="Assets\Shaders\Triangle.hlsli">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
