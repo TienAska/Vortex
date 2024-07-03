@@ -1,15 +1,7 @@
 ﻿#include "pch.h"
 
-extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 610; }
-
+extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
-
-
-//using namespace winrt;
-//using namespace winrt::Windows::Foundation;
-
-#include <iostream>
-
 
 #include <Vortex.h>
 #include <Renderer.h>
