@@ -4,10 +4,15 @@
 #include "DeviceManager.h"
 #include "Shader.h"
 
+extern "C" __declspec(dllexport) BSTR GetName()
+{
+	return SysAllocString(L"Vortex");
+}
 
-//extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 610; }
-//
-//extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
+extern "C" __declspec(dllexport) int GetNum()
+{
+	return 1;
+}
 
 Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width), m_height(height)
 {

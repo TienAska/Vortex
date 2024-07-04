@@ -14,8 +14,8 @@
 
 Vortex::Mesh::Mesh()
 {
-	auto glbStream = std::make_shared<std::ifstream>("some\\path.glb", std::ios::binary);
-	auto streamReader = std::make_unique<StreamReader>();
-	Microsoft::glTF::GLBResourceReader reader(std::move(streamReader), glbStream);
+	//auto glbStream = std::make_shared<std::ifstream>("some\\path.glb", std::ios::binary);
+	//auto streamReader = std::make_unique<StreamReader>();
+	//Microsoft::glTF::GLBResourceReader reader(std::move(streamReader), glbStream);
 
 }

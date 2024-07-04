@@ -78,9 +78,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <CopyFileToFolders Include="Assets\Shaders\CubeMS.hlsl">
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
@@ -102,5 +99,8 @@
     <CopyFileToFolders Include="Assets\Shaders\Triangle.hlsli">
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

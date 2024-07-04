@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\Microsoft.GDK.PC.230602.10.0.22621.4304\build\Microsoft.GDK.PC.230602.props" Condition="Exists('..\packages\Microsoft.GDK.PC.230602.10.0.22621.4304\build\Microsoft.GDK.PC.230602.props')" />
-  <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.610.5\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.5\build\native\Microsoft.Direct3D.D3D12.props')" />
-  <Import Project="..\packages\Microsoft.Direct3D.DXC.1.7.2308.12\build\native\Microsoft.Direct3D.DXC.props" Condition="Exists('..\packages\Microsoft.Direct3D.DXC.1.7.2308.12\build\native\Microsoft.Direct3D.DXC.props')" />
-  <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props')" />
+  <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.240405.15\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.240405.15\build\native\Microsoft.Windows.CppWinRT.props')" />
+  <Import Project="..\packages\Microsoft.Direct3D.DXC.1.8.2405.17\build\native\Microsoft.Direct3D.DXC.props" Condition="Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2405.17\build\native\Microsoft.Direct3D.DXC.props')" />
+  <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -126,9 +125,7 @@
   <ItemGroup>
     <CopyFileToFolders Include="Assets\Shaders\Triangle.hlsli">
       <FileType>Document</FileType>
-      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Assets\Shaders</DestinationFolders>
     </CopyFileToFolders>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="Assets\Shaders\CubeMS.hlsl">
@@ -157,30 +154,28 @@
       <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)Assets\Textures</DestinationFolders>
     </CopyFileToFolders>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
-    <Import Project="..\packages\Microsoft.Direct3D.DXC.1.7.2308.12\build\native\Microsoft.Direct3D.DXC.targets" Condition="Exists('..\packages\Microsoft.Direct3D.DXC.1.7.2308.12\build\native\Microsoft.Direct3D.DXC.targets')" />
-    <Import Project="..\packages\directxtk12_desktop_2019.2023.9.6.2\build\native\directxtk12_desktop_2019.targets" Condition="Exists('..\packages\directxtk12_desktop_2019.2023.9.6.2\build\native\directxtk12_desktop_2019.targets')" />
-    <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.610.5\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.5\build\native\Microsoft.Direct3D.D3D12.targets')" />
-    <Import Project="..\packages\Microsoft.GDK.PC.230602.10.0.22621.4304\build\Microsoft.GDK.PC.230602.targets" Condition="Exists('..\packages\Microsoft.GDK.PC.230602.10.0.22621.4304\build\Microsoft.GDK.PC.230602.targets')" />
-    <Import Project="..\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets" Condition="Exists('..\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets')" />
+    <Import Project="..\packages\directxtk12_desktop_2019.2024.6.5.1\build\native\directxtk12_desktop_2019.targets" Condition="Exists('..\packages\directxtk12_desktop_2019.2024.6.5.1\build\native\directxtk12_desktop_2019.targets')" />
+    <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.targets')" />
+    <Import Project="..\packages\Microsoft.Direct3D.DXC.1.8.2405.17\build\native\Microsoft.Direct3D.DXC.targets" Condition="Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2405.17\build\native\Microsoft.Direct3D.DXC.targets')" />
     <Import Project="..\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets" Condition="Exists('..\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets')" />
+    <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.240405.15\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.240405.15\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230706.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.DXC.1.7.2308.12\build\native\Microsoft.Direct3D.DXC.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.DXC.1.7.2308.12\build\native\Microsoft.Direct3D.DXC.props'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.DXC.1.7.2308.12\build\native\Microsoft.Direct3D.DXC.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.DXC.1.7.2308.12\build\native\Microsoft.Direct3D.DXC.targets'))" />
-    <Error Condition="!Exists('..\packages\directxtk12_desktop_2019.2023.9.6.2\build\native\directxtk12_desktop_2019.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtk12_desktop_2019.2023.9.6.2\build\native\directxtk12_desktop_2019.targets'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.5\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.610.5\build\native\Microsoft.Direct3D.D3D12.props'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.5\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.610.5\build\native\Microsoft.Direct3D.D3D12.targets'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.GDK.PC.230602.10.0.22621.4304\build\Microsoft.GDK.PC.230602.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.GDK.PC.230602.10.0.22621.4304\build\Microsoft.GDK.PC.230602.props'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.GDK.PC.230602.10.0.22621.4304\build\Microsoft.GDK.PC.230602.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.GDK.PC.230602.10.0.22621.4304\build\Microsoft.GDK.PC.230602.targets'))" />
-    <Error Condition="!Exists('..\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\rapidjson.temprelease.0.0.2.20\build\native\rapidjson.temprelease.targets'))" />
+    <Error Condition="!Exists('..\packages\directxtk12_desktop_2019.2024.6.5.1\build\native\directxtk12_desktop_2019.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtk12_desktop_2019.2024.6.5.1\build\native\directxtk12_desktop_2019.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2405.17\build\native\Microsoft.Direct3D.DXC.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.DXC.1.8.2405.17\build\native\Microsoft.Direct3D.DXC.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2405.17\build\native\Microsoft.Direct3D.DXC.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.DXC.1.8.2405.17\build\native\Microsoft.Direct3D.DXC.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.glTF.CPP.1.6.3.1\build\native\Microsoft.glTF.CPP.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.240405.15\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.240405.15\build\native\Microsoft.Windows.CppWinRT.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.240405.15\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.240405.15\build\native\Microsoft.Windows.CppWinRT.targets'))" />
   </Target>
 </Project>

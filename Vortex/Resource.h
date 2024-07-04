@@ -32,7 +32,7 @@ namespace Vortex
 	class StreamReader : public Microsoft::glTF::IStreamReader
 	{
 	public:
-		StreamReader(/*std::filesystem::path filePath*/) : m_stream(std::make_shared<std::istream>(/*std::ios_base::app | std::ios_base::binary | std::ios_base::in | std::ios_base::out*/))
+		StreamReader(/*std::filesystem::path filePath*/)// : m_stream(std::make_shared<std::istream>(/*std::ios_base::app | std::ios_base::binary | std::ios_base::in | std::ios_base::out*/))
 		{
 			//assert(filePath.ex)
 		}
