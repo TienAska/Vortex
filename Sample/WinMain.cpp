@@ -1,9 +1,10 @@
 ﻿#include "pch.h"
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
+extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
 
-#include <Vortex.h>
-#include <SimpleRenderer.h>
+#include "../Vortex/Vortex.h"
+#include "../Vortex/SimpleRenderer.h"
 
 std::shared_ptr<SimpleRenderer> g_renderer;
 
