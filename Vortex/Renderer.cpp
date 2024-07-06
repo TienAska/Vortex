@@ -79,11 +79,12 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	// Create descriptor heaps.
 	{
 		// Describe and create a render target view (RTV) descriptor heap.
-		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-		rtvHeapDesc.NumDescriptors = FrameCount;
-		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		winrt::check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+		//D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+		//rtvHeapDesc.NumDescriptors = FrameCount;
+		//rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		//rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		//winrt::check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+		m_rtvHeap = CreateRTVHeap();
 
 		m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	}
@@ -103,57 +104,7 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 
 	winrt::check_hresult(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 
-
-	//// Create root signature.
-	//CD3DX12_DESCRIPTOR_RANGE1 descRange[1];
-	//descRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-
-	//CD3DX12_ROOT_PARAMETER1 rootParameter[1];
-	////rootParameter[0].InitAsDescriptorTable(1, descRange);
-	//rootParameter[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC);
-
-
-	//CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc;
-	//versionedRootSignatureDesc.Init_1_1(1, rootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-	//winrt::com_ptr<ID3DBlob> signature;
-	//winrt::com_ptr<ID3DBlob> error;
-
-	//winrt::check_hresult(D3D12SerializeVersionedRootSignature(&versionedRootSignatureDesc, signature.put(), error.put()));
-	//winrt::check_hresult(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
-
-	//// Compile shaders.
-	//Shader vertexShader(L"TriangleVS");
-	//Shader pixelShader(L"TrianglePS");
-
-
-	//// Define the vertex input layout.
-	//D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	//{
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//	{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	//};
-
-
-	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-	//psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-	//psoDesc.pRootSignature = m_rootSignature.get();
-	//psoDesc.VS = vertexShader.GetBytecode();
-	//psoDesc.PS = pixelShader.GetBytecode();
-	//psoDesc.NumRenderTargets = 1;
-	//psoDesc.RTVFormats[0] = m_renderTargets[0]->GetDesc().Format;
-	////psoDesc.DSVFormat = m_depthStencil->GetDesc().Format;
-	//psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);    // CW front; cull back
-	//psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);         // Opaque
-	////psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // Less-equal depth test w/ writes; no stencil
-	//psoDesc.DepthStencilState.DepthEnable = FALSE;
-	//psoDesc.DepthStencilState.StencilEnable = FALSE;
-	//psoDesc.SampleMask = UINT_MAX;
-	//psoDesc.SampleDesc = DefaultSampleDesc();
-	//psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	//winrt::check_hresult(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
-
+	//m_pipelineState = CreateVertexPixelPSO(m_renderTargets[0], nullptr);
 	m_pipelineState = CreatePreceduralMeshPSO(m_renderTargets[0], nullptr);
 
     auto device = m_device.as<ID3D12Device4>();
@@ -338,7 +289,7 @@ void Vortex::Renderer::PopulateCommandList()
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	//m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	//m_commandList->DrawInstanced(1, 0, 0, 0);
+	//m_commandList->DrawInstanced(3, 1, 0, 0);
 	m_commandList->DispatchMesh(1, 1, 1);
 
 	// Indicate that the back buffer will now be used to present.

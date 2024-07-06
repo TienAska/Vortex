@@ -13,6 +13,11 @@ namespace Vortex
 
 	//static 	winrt::com_ptr<ID3D12Resource> GetTextureResource(uint32_t index);
 
+	void CreateRenderTarget()
+	{
+
+	}
+
 
 	class VORTEX_API Texture
 	{

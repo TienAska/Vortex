@@ -111,6 +111,9 @@
     <CopyFileToFolders Include="Assets\Shaders\ProceduralPS.hlsl">
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\ProceduralAS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
