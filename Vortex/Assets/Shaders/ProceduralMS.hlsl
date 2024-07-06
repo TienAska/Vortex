@@ -14,10 +14,10 @@ void main(
     vertices[0].Color = float4(1, 0, 0, 1);
 
     vertices[1].PositionHS = float4(0.25, -0.25, 0, 1);
-    vertices[1].Color = float4(1, 0, 0, 1);
+    vertices[1].Color = float4(0, 1, 0, 1);
 
     vertices[2].PositionHS = float4(-0.25, -0.25, 0, 1);
-    vertices[2].Color = float4(1, 0, 0, 1);
+    vertices[2].Color = float4(0, 0, 1, 1);
 
     indices[0] = uint3(0, 1, 2);
 }

@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "DeviceManager.h"
 #include "Shader.h"
+#include "MeshRenderPass.h"
 
 extern "C" __declspec(dllexport) BSTR GetName()
 {
@@ -103,62 +104,65 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	winrt::check_hresult(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 
 
-	// Create root signature.
-	CD3DX12_DESCRIPTOR_RANGE1 descRange[1];
-	descRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+	//// Create root signature.
+	//CD3DX12_DESCRIPTOR_RANGE1 descRange[1];
+	//descRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-	CD3DX12_ROOT_PARAMETER1 rootParameter[1];
-	//rootParameter[0].InitAsDescriptorTable(1, descRange);
-	rootParameter[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC);
-
-
-	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc;
-	versionedRootSignatureDesc.Init_1_1(1, rootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-	winrt::com_ptr<ID3DBlob> signature;
-	winrt::com_ptr<ID3DBlob> error;
-
-	winrt::check_hresult(D3D12SerializeVersionedRootSignature(&versionedRootSignatureDesc, signature.put(), error.put()));
-	winrt::check_hresult(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
-
-	// Compile shaders.
-	Shader vertexShader(L"TriangleVS");
-	Shader pixelShader(L"TrianglePS");
+	//CD3DX12_ROOT_PARAMETER1 rootParameter[1];
+	////rootParameter[0].InitAsDescriptorTable(1, descRange);
+	//rootParameter[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC);
 
 
-	// Define the vertex input layout.
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
+	//CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc;
+	//versionedRootSignatureDesc.Init_1_1(1, rootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	//winrt::com_ptr<ID3DBlob> signature;
+	//winrt::com_ptr<ID3DBlob> error;
+
+	//winrt::check_hresult(D3D12SerializeVersionedRootSignature(&versionedRootSignatureDesc, signature.put(), error.put()));
+	//winrt::check_hresult(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+
+	//// Compile shaders.
+	//Shader vertexShader(L"TriangleVS");
+	//Shader pixelShader(L"TrianglePS");
 
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-	psoDesc.pRootSignature = m_rootSignature.get();
-	psoDesc.VS = vertexShader.GetBytecode();
-	psoDesc.PS = pixelShader.GetBytecode();
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = m_renderTargets[0]->GetDesc().Format;
-	//psoDesc.DSVFormat = m_depthStencil->GetDesc().Format;
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);    // CW front; cull back
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);         // Opaque
-	//psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // Less-equal depth test w/ writes; no stencil
-	psoDesc.DepthStencilState.DepthEnable = FALSE;
-	psoDesc.DepthStencilState.StencilEnable = FALSE;
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.SampleDesc = DefaultSampleDesc();
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	//// Define the vertex input layout.
+	//D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+	//{
+	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	//	{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	//};
 
-	winrt::check_hresult(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+	//psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	//psoDesc.pRootSignature = m_rootSignature.get();
+	//psoDesc.VS = vertexShader.GetBytecode();
+	//psoDesc.PS = pixelShader.GetBytecode();
+	//psoDesc.NumRenderTargets = 1;
+	//psoDesc.RTVFormats[0] = m_renderTargets[0]->GetDesc().Format;
+	////psoDesc.DSVFormat = m_depthStencil->GetDesc().Format;
+	//psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);    // CW front; cull back
+	//psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);         // Opaque
+	////psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // Less-equal depth test w/ writes; no stencil
+	//psoDesc.DepthStencilState.DepthEnable = FALSE;
+	//psoDesc.DepthStencilState.StencilEnable = FALSE;
+	//psoDesc.SampleMask = UINT_MAX;
+	//psoDesc.SampleDesc = DefaultSampleDesc();
+	//psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+	//winrt::check_hresult(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+
+	m_pipelineState = CreatePreceduralMeshPSO(m_renderTargets[0], nullptr);
+
+    auto device = m_device.as<ID3D12Device4>();
 	// Create the command list.
-	winrt::check_hresult(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.get(), m_pipelineState.get(), IID_PPV_ARGS(&m_commandList)));
+	winrt::check_hresult(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_commandList)));
 
 	// Command lists are created in the recording state, but there is nothing
 	// to record yet. The main loop expects it to be closed, so close it now.
-	winrt::check_hresult(m_commandList->Close());
+	//winrt::check_hresult(m_commandList->Close());
 
 	// Create the vertex buffer.
 	{
@@ -315,9 +319,9 @@ void Vortex::Renderer::PopulateCommandList()
 	winrt::check_hresult(m_commandList->Reset(m_commandAllocator.get(), m_pipelineState.get()));
 
 	ID3D12DescriptorHeap* heaps[] = { m_resourceHeap.get() };
-	m_commandList->SetDescriptorHeaps(1, heaps);
+	//m_commandList->SetDescriptorHeaps(1, heaps);
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
-	m_commandList->SetGraphicsRootConstantBufferView(0, m_cbvResource->GetGPUVirtualAddress());
+	//m_commandList->SetGraphicsRootConstantBufferView(0, m_cbvResource->GetGPUVirtualAddress());
 	//m_commandList->SetGraphicsRootDescriptorTable(0, m_resourceHeap->GetGPUDescriptorHandleForHeapStart());
 	m_commandList->RSSetViewports(1, &m_viewport);
 	m_commandList->RSSetScissorRects(1, &m_scissorRect);
@@ -332,9 +336,10 @@ void Vortex::Renderer::PopulateCommandList()
 	// Record commands.
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	m_commandList->DrawInstanced(3, 1, 0, 0);
+	//m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	//m_commandList->DrawInstanced(1, 0, 0, 0);
+	m_commandList->DispatchMesh(1, 1, 1);
 
 	// Indicate that the back buffer will now be used to present.
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);

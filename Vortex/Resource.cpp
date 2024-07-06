@@ -19,3 +19,8 @@ Vortex::Mesh::Mesh()
 	//Microsoft::glTF::GLBResourceReader reader(std::move(streamReader), glbStream);
 
 }
+
+Vortex::Mesh::~Mesh()
+{
+	//m_Resource->Release();
+}

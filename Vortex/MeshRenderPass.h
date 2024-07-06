@@ -31,6 +31,10 @@ namespace Vortex
         psoDesc.MS = meshShader->GetBytecode();
         psoDesc.PS = pixelShader->GetBytecode();
         psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);         // Opaque
+        psoDesc.BlendState.RenderTarget[0].BlendEnable = true;        // Transparency
+        //psoDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+        //psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+        //psoDesc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
         psoDesc.SampleMask = DefaultSampleMask();
         psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);    // CW front; cull back
         psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // Less-equal depth test w/ writes; no stencil

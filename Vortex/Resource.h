@@ -53,12 +53,23 @@ namespace Vortex
 		Mesh();
 		~Mesh();
 
-		ID3D12Resource* GetResource()
+		void SetVertexCount(uint32_t count)
 		{
-			return m_Resource.get();
+			m_vertexCount = count;
 		}
 
+		uint32_t GetVertexCount() const
+		{
+			return m_vertexCount;
+		}
+
+		//ID3D12Resource* GetResource()
+		//{
+		//	return m_Resource.get();
+		//}
+
 	private:
-		winrt::com_ptr<ID3D12Resource> m_Resource;
+		uint32_t m_vertexCount;
+		//winrt::com_ptr<ID3D12Resource> m_Resource;
 	};
 }
