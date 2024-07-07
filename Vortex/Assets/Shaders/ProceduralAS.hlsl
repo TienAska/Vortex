@@ -1,4 +1,4 @@
-#include "Procedural.hlsli"
+#include "Procedural.h"
 
 groupshared Payload s_payload;
 

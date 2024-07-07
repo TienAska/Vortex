@@ -1,4 +1,4 @@
-#include "Procedural.hlsli"
+#include "Procedural.h"
 
 float4 main(MeshToPixel input) : SV_TARGET
 {

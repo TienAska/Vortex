@@ -3,6 +3,8 @@
 #include "Renderer.h"
 #include "DeviceManager.h"
 #include "Shader.h"
+#include "Assets/Shaders/ShaderUniforms.h"
+#include "Resource.h"
 #include "MeshRenderPass.h"
 
 extern "C" __declspec(dllexport) BSTR GetName()
