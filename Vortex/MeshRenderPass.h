@@ -2,26 +2,10 @@
 
 namespace Vortex
 {
-    winrt::com_ptr<ID3D12PipelineState> CreatePreceduralMeshPSO(winrt::com_ptr<ID3D12Resource> renderTarget, winrt::com_ptr<ID3D12Resource> depthStencil)
+    winrt::com_ptr<ID3D12PipelineState> CreatePreceduralMeshPSO(winrt::com_ptr<ID3D12RootSignature> rootSignature, winrt::com_ptr<ID3D12Resource> renderTarget, winrt::com_ptr<ID3D12Resource> depthStencil)
     {
         winrt::com_ptr<ID3D12Device2> device = DeviceManager::Instance().GetDevice();
 
-        winrt::com_ptr<ID3D12RootSignature> rootSignature; // Empty
-        D3D12_ROOT_SIGNATURE_DESC rootSigDesc = {};
-        rootSigDesc.NumParameters = 0;
-        rootSigDesc.pParameters = nullptr;
-        rootSigDesc.NumStaticSamplers = 0;
-        rootSigDesc.pStaticSamplers = nullptr;
-        rootSigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-        winrt::com_ptr<ID3DBlob> serializedRootSig = nullptr;
-        winrt::com_ptr<ID3DBlob> errorBlob = nullptr;
-        HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1, serializedRootSig.put(), errorBlob.put());
-
-        if (SUCCEEDED(hr)) {
-            device->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-        }
-        
         auto amplificationShader = std::make_shared<Shader>(L"ProceduralAS");
         auto meshShader = std::make_shared<Shader>(L"ProceduralMS");
         auto pixelShader = std::make_shared<Shader>(L"ProceduralPS");
@@ -116,5 +100,31 @@ namespace Vortex
         winrt::com_ptr<ID3D12PipelineState> pipelineState;
         winrt::check_hresult(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineState)));
         return pipelineState;
+    }
+
+    winrt::com_ptr<ID3D12RootSignature> CreateRootSignature()
+    {
+        winrt::com_ptr<ID3D12Device2> device = DeviceManager::Instance().GetDevice();
+
+        winrt::com_ptr<ID3D12RootSignature> rootSignature; // Empty
+        // Create root signature.
+        CD3DX12_DESCRIPTOR_RANGE1 descRange[1];
+        descRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+
+        CD3DX12_ROOT_PARAMETER1 rootParameter[1];
+        rootParameter[0].InitAsDescriptorTable(1, descRange);
+        //rootParameter[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC);
+
+
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc;
+        versionedRootSignatureDesc.Init_1_1(1, rootParameter);
+
+        winrt::com_ptr<ID3DBlob> signature;
+        winrt::com_ptr<ID3DBlob> error;
+
+        winrt::check_hresult(D3D12SerializeVersionedRootSignature(&versionedRootSignatureDesc, signature.put(), error.put()));
+        winrt::check_hresult(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
+
+        return rootSignature;
     }
 }

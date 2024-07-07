@@ -1,5 +1,5 @@
 #ifdef __cplusplus
-typedef DirectX::SimpleMath::Matrix float4x4;
+typedef DirectX::XMMATRIX  float4x4;
 #endif
 
 struct GlobalParameters

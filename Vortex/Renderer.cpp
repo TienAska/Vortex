@@ -4,7 +4,6 @@
 #include "DeviceManager.h"
 #include "Shader.h"
 #include "Assets/Shaders/ShaderUniforms.h"
-#include "Resource.h"
 #include "MeshRenderPass.h"
 
 extern "C" __declspec(dllexport) BSTR GetName()
@@ -106,8 +105,11 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 
 	winrt::check_hresult(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 
+
+    m_rootSignature = CreateRootSignature();
+
 	//m_pipelineState = CreateVertexPixelPSO(m_renderTargets[0], nullptr);
-	m_pipelineState = CreatePreceduralMeshPSO(m_renderTargets[0], nullptr);
+	m_pipelineState = CreatePreceduralMeshPSO(m_rootSignature, m_renderTargets[0], nullptr);
 
     auto device = m_device.as<ID3D12Device4>();
 	// Create the command list.
@@ -158,7 +160,7 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 
 	// Create resource heap.
 	{
-		m_cbvResourceSize = (sizeof(DirectX::SimpleMath::Matrix) + 255) & ~255;
+		m_cbvResourceSize = (sizeof(GlobalParameters) + 255) & ~255;
 		m_resourceHeap = CreateResourceHeap();
 	}
 
@@ -229,10 +231,11 @@ void Vortex::Renderer::Update()
 		static int size = 1;
 		UINT8* data;
 		DirectX::SimpleMath::Matrix world = DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
-		world = m_camera.GetViewProjection().Transpose();
+		//world = m_camera.GetViewProjection().Transpose();
+		GlobalParameters globalParameters = { 3, world.Transpose(), world.Transpose(), world.Transpose() };
 		CD3DX12_RANGE readRange(0, 0);
 		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
-		memcpy(data, &world, sizeof(DirectX::SimpleMath::Matrix));
+		memcpy(data, &globalParameters, sizeof(GlobalParameters));
 		m_cbvResource->Unmap(0, nullptr);
 		size++;
 	}
@@ -272,10 +275,10 @@ void Vortex::Renderer::PopulateCommandList()
 	winrt::check_hresult(m_commandList->Reset(m_commandAllocator.get(), m_pipelineState.get()));
 
 	ID3D12DescriptorHeap* heaps[] = { m_resourceHeap.get() };
-	//m_commandList->SetDescriptorHeaps(1, heaps);
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
+	m_commandList->SetDescriptorHeaps(1, heaps);
+	m_commandList->SetGraphicsRootDescriptorTable(0, m_resourceHeap->GetGPUDescriptorHandleForHeapStart());
 	//m_commandList->SetGraphicsRootConstantBufferView(0, m_cbvResource->GetGPUVirtualAddress());
-	//m_commandList->SetGraphicsRootDescriptorTable(0, m_resourceHeap->GetGPUDescriptorHandleForHeapStart());
 	m_commandList->RSSetViewports(1, &m_viewport);
 	m_commandList->RSSetScissorRects(1, &m_scissorRect);
 
