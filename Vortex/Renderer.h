@@ -65,6 +65,10 @@ namespace Vortex
 		winrt::com_ptr<ID3D12Resource> m_srvResource;
 		winrt::com_ptr<ID3D12Resource> m_uavResource;
 
+		winrt::com_ptr<ID3D12DescriptorHeap> m_samplerHeap;
+
+		void UploadTexture();
+
 		// Synchronization objects.
 		UINT m_frameIndex;
 		HANDLE m_fenceEvent;
