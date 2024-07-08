@@ -278,9 +278,9 @@ void Vortex::Renderer::PopulateCommandList()
 
 	ID3D12DescriptorHeap* heaps[] = { m_resourceHeap.get(), m_samplerHeap.get() };
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
-	m_commandList->SetDescriptorHeaps(1, heaps);
+	m_commandList->SetDescriptorHeaps(2, heaps);
 	m_commandList->SetGraphicsRootDescriptorTable(0, m_resourceHeap->GetGPUDescriptorHandleForHeapStart());
-	m_commandList->SetGraphicsRootDescriptorTable(0, m_samplerHeap->GetGPUDescriptorHandleForHeapStart());
+	m_commandList->SetGraphicsRootDescriptorTable(1, m_samplerHeap->GetGPUDescriptorHandleForHeapStart());
 	//m_commandList->SetGraphicsRootConstantBufferView(0, m_cbvResource->GetGPUVirtualAddress());
 	m_commandList->RSSetViewports(1, &m_viewport);
 	m_commandList->RSSetScissorRects(1, &m_scissorRect);
