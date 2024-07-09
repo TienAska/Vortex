@@ -258,7 +258,7 @@ void Vortex::Renderer::Render()
 	PopulateCommandList();
 
 	// Execute the command list.
-	ID3D12CommandList* ppCommandLists[] = { m_commandList.get() };
+    ID3D12CommandList* ppCommandLists[] = { m_computePipeline->GetCommandList().get(), m_commandList.get() };
 	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	// Present the frame.
