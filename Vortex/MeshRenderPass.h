@@ -2,7 +2,7 @@
 
 namespace Vortex
 {
-    winrt::com_ptr<ID3D12PipelineState> CreatePreceduralMeshPSO(winrt::com_ptr<ID3D12RootSignature> rootSignature, winrt::com_ptr<ID3D12Resource> renderTarget, winrt::com_ptr<ID3D12Resource> depthStencil)
+    winrt::com_ptr<ID3D12PipelineState> CreatePreceduralMeshPSO(const winrt::com_ptr<ID3D12RootSignature>& rootSignature, const winrt::com_ptr<ID3D12Resource>& renderTarget, const winrt::com_ptr<ID3D12Resource>& depthStencil)
     {
         winrt::com_ptr<ID3D12Device2> device = DeviceManager::Instance().GetDevice();
 

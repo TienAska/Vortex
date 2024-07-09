@@ -41,7 +41,7 @@ Vortex::Shader::Shader(const winrt::hstring& name)
 
 	fs::path filePath = fs::path(s_shaderFolder.c_str()).append(name.c_str()).replace_extension("hlsl");
 	m_sourceFilename = filePath.c_str();
-	fs::path cachePath = fs::path(s_cacheFolder.c_str()).append(name.c_str()).replace_extension("bin");
+	fs::path cachePath = fs::path(s_cacheFolder.c_str()).append(name.c_str()).replace_extension("cso");
 	if (!fs::exists(cachePath.parent_path()))
 	{
 		fs::create_directories(cachePath.parent_path());
@@ -92,15 +92,7 @@ void Vortex::Shader::Compile()
 		DXC_CP_ACP
 	};
 
-
-	// Build arguments
-	LPCWSTR args[]{
-		L"-Fo", m_cacheFilename.c_str(),
-#if defined(_DEBUG)
-		DXC_ARG_DEBUG,
-		DXC_ARG_SKIP_OPTIMIZATIONS,
-#endif
-	};
+	// Target profile
 	LPCWSTR target = nullptr;
 	switch (m_type)
 	{
@@ -116,7 +108,18 @@ void Vortex::Shader::Compile()
 	case Shader::Pixel:
 		target = L"ps_6_5";
 		break;
+	case Shader::Compute:
+		target = L"cs_6_5";
+		break;
 	}
+	// Build arguments
+    LPCWSTR args[]{
+        L"-Fo", m_cacheFilename.c_str(),
+#if defined(_DEBUG)
+        DXC_ARG_DEBUG,
+        DXC_ARG_SKIP_OPTIMIZATIONS,
+#endif
+    };
 	winrt::com_ptr<IDxcCompilerArgs> compilerArgs;
 	winrt::check_hresult(dxcUtils->BuildArguments(
 		m_sourceFilename.c_str(),

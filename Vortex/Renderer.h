@@ -4,6 +4,8 @@
 
 namespace Vortex
 {
+	class ComputePipeline;
+
 	class Renderer
 	{
 	public:
@@ -86,6 +88,9 @@ namespace Vortex
 		// Input
 		winrt::com_ptr<IGameInput> m_gameInput;
 		winrt::com_ptr<IGameInputDevice> m_gameDevice;
+
+		// Compute resource
+		std::shared_ptr<ComputePipeline> m_computePipeline;
 
 		//inline HRESULT ReadDataFromFile(LPCWSTR filename, BYTE** data, UINT* size)
 		//{

@@ -53,6 +53,9 @@
     <ClInclude Include="MeshRenderPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ComputePipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -115,6 +118,9 @@
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Assets\Shaders\ShaderUniforms.h">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\NoiseCS.hlsl">
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
   </ItemGroup>

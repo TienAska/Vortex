@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Assets/Shaders/ShaderUniforms.h"
 #include "MeshRenderPass.h"
+#include "ComputePipeline.h"
 
 extern "C" __declspec(dllexport) BSTR GetName()
 {
@@ -165,6 +166,8 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 		m_samplerHeap = CreateSamplerHeap();
 	}
 
+	// Create Compute pipeline
+	m_computePipeline = std::make_shared<ComputePipeline>();
 
 	// Create synchronization objects.
 	{
@@ -355,7 +358,7 @@ winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateResourceHeap()
 {
 	winrt::com_ptr<ID3D12DescriptorHeap> resourceHeap;
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
-	descriptorHeapDesc.NumDescriptors = 3;
+	descriptorHeapDesc.NumDescriptors = 2;
 	descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	winrt::check_hresult(m_device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&resourceHeap)));
