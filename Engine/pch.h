@@ -7,6 +7,7 @@
 #include <dwmapi.h>
 #include <dxgi1_6.h>
 #include <d3d12.h>
+#include <d3dx12.h>
 
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>

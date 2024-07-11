@@ -1,6 +1,5 @@
 ﻿#include "pch.h"
-
-#include "Device.h"
+#include "Renderer.h"
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -8,9 +7,6 @@ _Use_decl_annotations_
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pCmdLine*/, int nCmdShow)
 {
     winrt::init_apartment(winrt::apartment_type::single_threaded);
-
-    Vortex::Device::Initialize();
-    winrt::hstring description = Vortex::Device::GetDevice0().GetDescription();
 
     // Initialize the window class.
     WNDCLASSEX windowClass = { 0 };

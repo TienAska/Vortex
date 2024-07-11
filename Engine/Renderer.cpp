@@ -1,103 +1,25 @@
 #include "pch.h"
-//
-//#include "Renderer.h"
-//
-//extern "C" __declspec(dllexport) BSTR GetName()
+#include "Renderer.h"
+
+Vortex::SwapChain::SwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQueue, HWND hwnd, uint32_t width, uint32_t height)
+{
+	m_swapChain = VX_DEVICE0->CreateSwapChain(commandQueue, hwnd, width, height, m_renderTargets);
+	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
+//Vortex::Renderer::Renderer(HWND hwnd, uint32_t width, uint32_t height)
 //{
-//	return SysAllocString(L"Vortex");
-//}
+//	if (!Device::IsInitialized())
+//		Device::Initialize();
 //
-//extern "C" __declspec(dllexport) int GetNum()
-//{
-//	return 1;
+//	m_commandQueue = VX_DEVICE0->CreateCommandQueue();
 //}
 //
 //Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width), m_height(height)
 //{
-//	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
-//	m_scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height));
 //
-//	m_textureFilename = L"Assets/Textures/Fabric_DishCloth_D.tif";
-//
-//	m_device = DeviceManager::GetDevice();
-//
-//	// Describe and create the command queue.
-//	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-//	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-//	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-//
-//	winrt::check_hresult(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)));
-//
-//	// Describe and create the swap chain.
-//	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-//	swapChainDesc.Width = m_width;
-//	swapChainDesc.Height = m_height;
-//	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-//	swapChainDesc.SampleDesc.Count = 1;
-//	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-//	swapChainDesc.BufferCount = FrameCount;
-//	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-//	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-//	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-//
-//	winrt::com_ptr<IDXGISwapChain1> swapChain;
-//	//winrt::check_hresult(factory->CreateSwapChainForComposition(
-//	//	m_commandQueue.get(),        // Swap chain needs the queue so that it can force a flush on it.
-//	//	&swapChainDesc,
-//	//	nullptr,
-//	//	swapChain.put()
-//	//));
-//
-//
-//	//winrt::check_hresult(DCompositionCreateDevice(nullptr, IID_PPV_ARGS(&dcompDevice)));
-//	//winrt::check_hresult(dcompDevice->CreateTargetForHwnd(hwnd, true, dcompTarget.put()));
-//	//winrt::check_hresult(dcompDevice->CreateVisual(dcompVisual.put()));
-//	//winrt::check_hresult(dcompVisual->SetContent(swapChain.get()));
-//	//winrt::check_hresult(dcompTarget->SetRoot(dcompVisual.get()));
-//	//winrt::check_hresult(dcompDevice->Commit());
-//
-//	winrt::com_ptr<IDXGIFactory6> factory = DeviceManager::GetFactory();
-//	winrt::check_hresult(factory->CreateSwapChainForHwnd(
-//		m_commandQueue.get(),        // Swap chain needs the queue so that it can force a flush on it.
-//		hwnd,
-//		&swapChainDesc,
-//		nullptr,
-//		nullptr,
-//		swapChain.put()
-//	));
-//
-//
-//	// This sample does not support fullscreen transitions.
-//	//winrt::check_hresult(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
-//
-//	m_swapChain = swapChain.as<IDXGISwapChain3>();
-//	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-//
-//	// Create descriptor heaps.
-//	{
-//		// Describe and create a render target view (RTV) descriptor heap.
-//		//D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-//		//rtvHeapDesc.NumDescriptors = FrameCount;
-//		//rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-//		//rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-//		//winrt::check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
-//		m_rtvHeap = CreateRTVHeap();
-//
-//		m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-//	}
-//
-//	// Create frame resources.
-//	{
-//		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
-//
-//		// Create a RTV for each frame.
-//		for (UINT n = 0; n < FrameCount; n++)
-//		{
-//			winrt::check_hresult(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
-//			m_device->CreateRenderTargetView(m_renderTargets[n].get(), nullptr, rtvHandle);
-//			rtvHandle.Offset(1, m_rtvDescriptorSize);
-//		}
-//	}
+//    m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
+//    m_scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height));
 //
 //	winrt::check_hresult(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 //
@@ -435,18 +357,4 @@
 //	m_device->CreateSampler(&samplerDesc, samplerHeap->GetCPUDescriptorHandleForHeapStart());
 //
 //	return samplerHeap;
-//}
-//
-//// Create descriptor heaps.
-//winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateRTVHeap()
-//{
-//	// Describe and create a render target view (RTV) descriptor heap.
-//	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-//	rtvHeapDesc.NumDescriptors = FrameCount;
-//	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-//	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-//	winrt::check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
-//
-//	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-//	return m_rtvHeap;
 //}
