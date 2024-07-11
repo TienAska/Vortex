@@ -1,0 +1,87 @@
+﻿#include "pch.h"
+
+#include "Device.h"
+
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+_Use_decl_annotations_
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pCmdLine*/, int nCmdShow)
+{
+    winrt::init_apartment(winrt::apartment_type::single_threaded);
+
+    Vortex::Device::Initialize();
+    winrt::hstring description = Vortex::Device::GetDevice0().GetDescription();
+
+    // Initialize the window class.
+    WNDCLASSEX windowClass = { 0 };
+    windowClass.cbSize = sizeof(WNDCLASSEX);
+    windowClass.style = CS_HREDRAW | CS_VREDRAW;
+    windowClass.lpfnWndProc = WindowProc;
+    windowClass.hInstance = hInstance;
+    windowClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+    windowClass.lpszClassName = L"Vortex Window Class";
+    ::RegisterClassEx(&windowClass);
+
+    // Create the window.
+    HWND hWnd = ::CreateWindowEx(
+        0,                              // Optional window styles.
+        windowClass.lpszClassName,                     // Window class
+        L"Vortex Engine",    // Window text
+        WS_OVERLAPPEDWINDOW,            // Window style
+
+        // Size and position
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+
+        NULL,       // Parent window    
+        NULL,       // Menu
+        hInstance,  // Instance handle
+        NULL        // Additional application data
+    );
+
+    if (hWnd == NULL)
+    {
+        return 0;
+    }
+
+    ::ShowWindow(hWnd, nCmdShow);
+
+    // Run the message loop.
+    MSG msg = { };
+    while (msg.message != WM_QUIT)
+    {
+        // Process any messages in the queue.
+        if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            ::TranslateMessage(&msg);
+            ::DispatchMessage(&msg);
+        }
+    }
+
+    return 0;
+}
+
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+    case WM_CREATE:
+    {
+        DWM_WINDOW_CORNER_PREFERENCE preference = DWMWCP_DONOTROUND;
+        ::DwmSetWindowAttribute(hWnd, DWMWA_WINDOW_CORNER_PREFERENCE, &preference, sizeof(preference));
+        break;
+    }
+    case WM_PAINT:
+    {
+
+        break;
+    }
+    case WM_DESTROY:
+    {
+        ::PostQuitMessage(0);
+        break;
+    }
+    default:
+        return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+    }
+    return 0;
+}
