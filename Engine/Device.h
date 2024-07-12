@@ -22,12 +22,16 @@ namespace Vortex
 		// Constructors
 		Device() = delete;
 		Device(const winrt::com_ptr<IDXGIAdapter3>& adaptor);
+	public:
+		// Getters
+        inline winrt::hstring GetDescription() const { return m_adapterDesc.Description; }
+	private:
 		// Variables
 		DXGI_ADAPTER_DESC2 m_adapterDesc;
 		winrt::com_ptr<ID3D12Device4> m_d3d12Device;
 		winrt::com_ptr<ID3D12DescriptorHeap> m_shaderVisibleHeap;
 	public:
-		// Functions
+		// Wrapped functions
 		winrt::com_ptr<ID3D12Fence1> CreateFence(uint64_t value) const;
 
 		winrt::com_ptr<ID3D12CommandQueue> CreateGraphicsCommandQueue() const;
@@ -35,9 +39,11 @@ namespace Vortex
 		winrt::com_ptr<ID3D12CommandQueue> CreateCopyCommandQueue() const;
 		winrt::com_ptr<ID3D12CommandAllocator> CreateGraphicsCommandAllocator() const;
 		winrt::com_ptr<ID3D12CommandAllocator> CreateComputeCommandAllocator() const;
+		winrt::com_ptr<ID3D12CommandAllocator> CreateBundleCommandAllocator() const;
 		winrt::com_ptr<ID3D12CommandAllocator> CreateCopyCommandAllocator() const;
         winrt::com_ptr<ID3D12GraphicsCommandList6> CreateGraphicsCommandList() const;
         winrt::com_ptr<ID3D12GraphicsCommandList6> CreateComputeCommandList() const;
+        winrt::com_ptr<ID3D12GraphicsCommandList6> CreateBundleCommandList() const;
         winrt::com_ptr<ID3D12GraphicsCommandList6> CreateCopyCommandList() const;
 
 		winrt::com_ptr<IDXGISwapChain3> CreateSwapChain(
@@ -45,7 +51,11 @@ namespace Vortex
 			const winrt::com_ptr<ID3D12CommandQueue>& commandQueue,
 			winrt::com_ptr<ID3D12Resource> renderTargets[VX_DOUBLE_BUFFER],
             winrt::com_ptr<ID3D12DescriptorHeap>& rtvHeap, uint32_t& descriptorSize) const;
-		// Getters
-        inline winrt::hstring GetDescription() const { return m_adapterDesc.Description; }
+
+		winrt::com_ptr<ID3D12RootSignature> CreateRootSignature(CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc) const;
+        winrt::com_ptr<ID3D12PipelineState> CreateMeshPSO(
+            const winrt::com_ptr<ID3D12RootSignature>& rootSignature,
+            D3D12_SHADER_BYTECODE mesh, D3D12_SHADER_BYTECODE pixel,
+            D3D12_SHADER_BYTECODE amplification = { NULL, 0 }) const;
 	};
 }

@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "Renderer.h"
+#include "MeshRenderPass.h"
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -42,6 +42,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pC
     );
 
     vxInstance.pRenderer = new Vortex::Renderer(hWnd, 1280, 800);
+    vxInstance.pRenderer->AddPass(Vortex::MeshRenderPass());
 
     if (hWnd == NULL)
     {
@@ -87,7 +88,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (vxInstance->pRenderer)
         {
-            vxInstance->pRenderer->Render();
+            vxInstance->pRenderer->Execute();
         }
         break;
     }

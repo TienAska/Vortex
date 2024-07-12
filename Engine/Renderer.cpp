@@ -43,70 +43,7 @@ Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
 	//winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
 }
 
-Vortex::Renderer::~Renderer()
-{
-	// Ensure that the GPU is no longer referencing resources that are about to be
-	// cleaned up by the destructor.
-	WaitForPreviousFrame();
-
-	m_fenceEvent.close();
-	//m_gameInput->Release();
-	//m_gameInput.detach();
-}
-//
-//void Vortex::Renderer::Update()
-//{
-//	// Get input.
-//	IGameInputReading* reading;
-//	if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard | GameInputKindMouse, nullptr, &reading)))
-//	{
-//		if (!m_gameDevice) reading->GetDevice(m_gameDevice.put());
-//
-//		std::vector<GameInputKeyState> keyState(reading->GetKeyCount());
-//		reading->GetKeyState(static_cast<uint32_t>(keyState.size()), keyState.data());
-//
-//		GameInputMouseState mouseState;
-//		if (reading->GetMouseState(&mouseState))
-//		{
-//			static GameInputMouseState lastState;
-//			static float sensitivity = 0.1f;
-//			if (mouseState.buttons & GameInputMouseRightButton)
-//			{
-//				float yaw = (mouseState.positionX - lastState.positionX) * sensitivity;
-//				float pitch = (mouseState.positionY - lastState.positionY) * sensitivity;
-//				lastState = mouseState;
-//				m_camera.Rotate(0.0f, yaw);
-//				m_camera.Rotate(pitch, 0.0f);
-//			}
-//		}
-//
-//		if (!keyState.empty() && keyState.front().virtualKey != '\0')
-//		{
-//			UploadTexture();
-//		}
-//		reading->Release();
-//
-//		// Update matrix to gpu.
-//		static int size = 1;
-//		UINT8* data;
-//		auto model = DirectX::SimpleMath::Matrix::Identity;
-//		//world *= DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
-//		//world = m_camera.GetViewProjection().Transpose();
-//		GlobalParameters globalParameters = { size, model.Transpose(), model.Transpose(), model.Transpose() };
-//		CD3DX12_RANGE readRange(0, 0);
-//		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
-//		memcpy(data, &globalParameters, sizeof(GlobalParameters));
-//		m_cbvResource->Unmap(0, nullptr);
-//		size++;
-//	}
-//	else if (m_gameDevice)
-//	{
-//		m_gameDevice->Release();
-//		m_gameDevice.detach();
-//	}
-//}
-//
-void Vortex::Renderer::Render()
+void Vortex::Renderer::Execute()
 {
 	WaitForPreviousFrame();
 
@@ -125,6 +62,11 @@ void Vortex::Renderer::Render()
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
+	for (const std::unique_ptr<IRenderPass>& pass : m_passes)
+	{
+		m_commandList->ExecuteBundle(pass->GetCommandList());
+	}
+
 	transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_swapChain->GetBackBufferRenderTarget().get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	m_commandList->ResourceBarrier(1, &transitionBarrier);
 
@@ -135,6 +77,17 @@ void Vortex::Renderer::Render()
 	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	m_swapChain->Flip();
+}
+
+Vortex::Renderer::~Renderer()
+{
+    // Ensure that the GPU is no longer referencing resources that are about to be
+    // cleaned up by the destructor.
+    WaitForPreviousFrame();
+
+    m_fenceEvent.close();
+    //m_gameInput->Release();
+    //m_gameInput.detach();
 }
 
 void Vortex::Renderer::WaitForPreviousFrame()
@@ -266,4 +219,57 @@ void Vortex::Renderer::WaitForPreviousFrame()
 //	m_device->CreateSampler(&samplerDesc, samplerHeap->GetCPUDescriptorHandleForHeapStart());
 //
 //	return samplerHeap;
+//}
+
+//
+//void Vortex::Renderer::Update()
+//{
+//	// Get input.
+//	IGameInputReading* reading;
+//	if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard | GameInputKindMouse, nullptr, &reading)))
+//	{
+//		if (!m_gameDevice) reading->GetDevice(m_gameDevice.put());
+//
+//		std::vector<GameInputKeyState> keyState(reading->GetKeyCount());
+//		reading->GetKeyState(static_cast<uint32_t>(keyState.size()), keyState.data());
+//
+//		GameInputMouseState mouseState;
+//		if (reading->GetMouseState(&mouseState))
+//		{
+//			static GameInputMouseState lastState;
+//			static float sensitivity = 0.1f;
+//			if (mouseState.buttons & GameInputMouseRightButton)
+//			{
+//				float yaw = (mouseState.positionX - lastState.positionX) * sensitivity;
+//				float pitch = (mouseState.positionY - lastState.positionY) * sensitivity;
+//				lastState = mouseState;
+//				m_camera.Rotate(0.0f, yaw);
+//				m_camera.Rotate(pitch, 0.0f);
+//			}
+//		}
+//
+//		if (!keyState.empty() && keyState.front().virtualKey != '\0')
+//		{
+//			UploadTexture();
+//		}
+//		reading->Release();
+//
+//		// Update matrix to gpu.
+//		static int size = 1;
+//		UINT8* data;
+//		auto model = DirectX::SimpleMath::Matrix::Identity;
+//		//world *= DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
+//		//world = m_camera.GetViewProjection().Transpose();
+//		GlobalParameters globalParameters = { size, model.Transpose(), model.Transpose(), model.Transpose() };
+//		CD3DX12_RANGE readRange(0, 0);
+//		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
+//		memcpy(data, &globalParameters, sizeof(GlobalParameters));
+//		m_cbvResource->Unmap(0, nullptr);
+//		size++;
+//	}
+//	else if (m_gameDevice)
+//	{
+//		m_gameDevice->Release();
+//		m_gameDevice.detach();
+//	}
 //}
