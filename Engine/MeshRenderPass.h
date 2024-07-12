@@ -11,21 +11,25 @@ namespace Vortex
         MeshRenderPass()
         {
             // Create resources.
-            m_descriptorHeap = VX_DEVICE0->CreateResourceHeap(2);
+            m_descriptorHeap = VX_DEVICE0->CreateResourceHeap(3);
 
             m_constantResource = VX_DEVICE0->CreateConstantResource(sizeof(GlobalParameters));
-            VX_DEVICE0->CreateCBV(m_constantResource, sizeof(GlobalParameters), m_descriptorHeap, 0);
+            m_handle0 = VX_DEVICE0->CreateCBV(m_constantResource, sizeof(GlobalParameters), m_descriptorHeap, 0);
 
-            m_textureResource = VX_DEVICE0->CreateTextureResource(DXGI_FORMAT_R8_UNORM, 32, 32);
+            m_textureResource = VX_DEVICE0->CreateUnorderedResource(DXGI_FORMAT_R8_UNORM, 32, 32);
             VX_DEVICE0->CreateSRV(m_textureResource, DXGI_FORMAT_R8_UNORM, m_descriptorHeap, 1);
+            
+            m_handle1 = VX_DEVICE0->CreateUAV(m_textureResource, DXGI_FORMAT_R8_UNORM, m_descriptorHeap, 2);
 
             // Create pipeline.
-            CD3DX12_DESCRIPTOR_RANGE1 descRange[2];
+            CD3DX12_DESCRIPTOR_RANGE1 descRange[3];
             descRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0
             descRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
+            descRange[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
 
-            CD3DX12_ROOT_PARAMETER1 rootParameter[1];
-            rootParameter[0].InitAsDescriptorTable(_countof(descRange), descRange);
+            CD3DX12_ROOT_PARAMETER1 rootParameter[2];
+            rootParameter[0].InitAsDescriptorTable(2, &descRange[0]); // b0, t0
+            rootParameter[1].InitAsDescriptorTable(1, &descRange[2]); // u0
 
             CD3DX12_STATIC_SAMPLER_DESC staticSamplerDesc[1];
             staticSamplerDesc[0].Init(0); // s0
@@ -55,7 +59,8 @@ namespace Vortex
             ID3D12DescriptorHeap* heaps[] = { m_descriptorHeap.get() };
             m_commandList->SetDescriptorHeaps(_countof(heaps), heaps);
             m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
-            m_commandList->SetGraphicsRootDescriptorTable(0, m_descriptorHeap->GetGPUDescriptorHandleForHeapStart());
+            m_commandList->SetGraphicsRootDescriptorTable(0, m_handle0);
+            m_commandList->SetGraphicsRootDescriptorTable(1, m_handle1);
 
             m_commandList->DispatchMesh(1, 1, 1);
             winrt::check_hresult(m_commandList->Close());
@@ -69,6 +74,9 @@ namespace Vortex
         winrt::com_ptr<ID3D12DescriptorHeap> m_descriptorHeap;
         winrt::com_ptr<ID3D12Resource> m_constantResource;
         winrt::com_ptr<ID3D12Resource> m_textureResource;
+        CD3DX12_GPU_DESCRIPTOR_HANDLE m_handle0;
+        CD3DX12_GPU_DESCRIPTOR_HANDLE m_handle1;
+
         // Pipeline
         winrt::com_ptr<ID3D12RootSignature> m_rootSignature;
         winrt::com_ptr<ID3D12PipelineState> m_pipelineState;

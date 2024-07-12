@@ -1,5 +1,4 @@
 #include "Procedural.h"
-
 #include "ShaderUniforms.h"
 
 ConstantBuffer<GlobalParameters> global : register(b0);

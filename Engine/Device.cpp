@@ -279,7 +279,7 @@ winrt::com_ptr<ID3D12Resource> Vortex::Device::CreateTextureResource(DXGI_FORMAT
 winrt::com_ptr<ID3D12Resource> Vortex::Device::CreateUnorderedResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const
 {
     D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, width, height, 1, 1);
+    D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, width, height, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     winrt::com_ptr<ID3D12Resource> resource;
     winrt::check_hresult(m_d3d12Device->CreateCommittedResource(
         &heapProperties,
@@ -292,7 +292,7 @@ winrt::com_ptr<ID3D12Resource> Vortex::Device::CreateUnorderedResource(DXGI_FORM
     return resource;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::Device::CreateCBV(
+CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateCBV(
     const winrt::com_ptr<ID3D12Resource>& resource, uint32_t sizeInBytes,
     const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const
 {
@@ -304,11 +304,11 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::Device::CreateCBV(
     cbvDesc.SizeInBytes = sizeInBytes;
     m_d3d12Device->CreateConstantBufferView(&cbvDesc, descriptorHandle);
 
-    return descriptorHandle;
+    return CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), index, descriptorSize);
 }
 
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::Device::CreateSRV(
+CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateSRV(
     const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format,
     const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const
 {
@@ -325,10 +325,10 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::Device::CreateSRV(
     srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     m_d3d12Device->CreateShaderResourceView(resource.get(), &srvDesc, descriptorHandle);
 
-    return descriptorHandle;
+    return CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), index, descriptorSize);
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::Device::CreateUAV(
+CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateUAV(
     const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format,
     const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const
 {
@@ -342,5 +342,5 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::Device::CreateUAV(
     uavDesc.Texture2D.PlaneSlice = 0;
     m_d3d12Device->CreateUnorderedAccessView(resource.get(), nullptr, &uavDesc, descriptorHandle);
 
-    return descriptorHandle;
+    return CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), index, descriptorSize);
 }

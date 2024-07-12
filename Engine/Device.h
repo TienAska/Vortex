@@ -67,15 +67,15 @@ namespace Vortex
 
 		winrt::com_ptr<ID3D12Resource> CreateUnorderedResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const;
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE CreateCBV(
+		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateCBV(
 			const winrt::com_ptr<ID3D12Resource>& resource, uint32_t sizeInBytes,
 			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const;
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE CreateSRV(
+		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateSRV(
 			const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format,
 			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const;
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE CreateUAV(
+		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateUAV(
 			const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format,
 			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const;
 
