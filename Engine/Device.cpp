@@ -10,15 +10,15 @@ void Vortex::Device::Initialize()
     WINRT_ASSERT(s_dxgiFactory == nullptr);
 
     uint32_t dxgiFactoryFlags = 0;
-//#if defined(_DEBUG)
-//    {
-//        winrt::com_ptr<ID3D12Debug1> debugController;
-//        winrt::check_hresult(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
-//        debugController->EnableDebugLayer();
-//        //debugController->SetEnableGPUBasedValidation(true);
-//        dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-//    }
-//#endif
+#if defined(_DEBUG)
+    {
+        winrt::com_ptr<ID3D12Debug1> debugController;
+        winrt::check_hresult(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+        debugController->EnableDebugLayer();
+        //debugController->SetEnableGPUBasedValidation(true);
+        dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+    }
+#endif
     winrt::check_hresult(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&s_dxgiFactory)));
 
 	winrt::com_ptr<IDXGIAdapter3> hardwareAdapter;
@@ -194,7 +194,6 @@ winrt::com_ptr<ID3D12RootSignature> Vortex::Device::CreateRootSignature(CD3DX12_
 
     winrt::com_ptr<ID3D12RootSignature> rootSignature;
     winrt::check_hresult(m_d3d12Device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
-
     return rootSignature;
 }
 
@@ -229,6 +228,119 @@ winrt::com_ptr<ID3D12PipelineState> Vortex::Device::CreateMeshPSO(
 
     winrt::com_ptr<ID3D12PipelineState> pipelineState;
     winrt::check_hresult(m_d3d12Device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&pipelineState)));
-
     return pipelineState;
+}
+
+winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Device::CreateResourceHeap(uint32_t num) const
+{
+    D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
+    descriptorHeapDesc.NumDescriptors = num;
+    descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+    winrt::com_ptr<ID3D12DescriptorHeap> resourceHeap;
+    winrt::check_hresult(m_d3d12Device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&resourceHeap)));
+    return resourceHeap;
+}
+
+winrt::com_ptr<ID3D12Resource> Vortex::Device::CreateConstantResource( uint32_t sizeInBytes) const
+{
+    D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes);
+    winrt::com_ptr<ID3D12Resource> resource;
+    winrt::check_hresult(m_d3d12Device->CreateCommittedResource(
+        &heapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &bufferDesc,
+        D3D12_RESOURCE_STATE_COMMON,
+        nullptr,
+        IID_PPV_ARGS(&resource)
+    ));
+    return resource;
+}
+
+winrt::com_ptr<ID3D12Resource> Vortex::Device::CreateTextureResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const
+{
+    D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, width, height, 1, 1);
+    winrt::com_ptr<ID3D12Resource> resource;
+    winrt::check_hresult(m_d3d12Device->CreateCommittedResource(
+        &heapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &bufferDesc,
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+        nullptr,
+        IID_PPV_ARGS(&resource)
+    ));
+    return resource;
+}
+
+
+winrt::com_ptr<ID3D12Resource> Vortex::Device::CreateUnorderedResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const
+{
+    D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, width, height, 1, 1);
+    winrt::com_ptr<ID3D12Resource> resource;
+    winrt::check_hresult(m_d3d12Device->CreateCommittedResource(
+        &heapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &bufferDesc,
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+        nullptr,
+        IID_PPV_ARGS(&resource)
+    ));
+    return resource;
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::Device::CreateCBV(
+    const winrt::com_ptr<ID3D12Resource>& resource, uint32_t sizeInBytes,
+    const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const
+{
+    uint32_t descriptorSize = m_d3d12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE descriptorHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), index, descriptorSize);
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+    cbvDesc.BufferLocation = resource->GetGPUVirtualAddress();
+    cbvDesc.SizeInBytes = sizeInBytes;
+    m_d3d12Device->CreateConstantBufferView(&cbvDesc, descriptorHandle);
+
+    return descriptorHandle;
+}
+
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::Device::CreateSRV(
+    const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format,
+    const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const
+{
+    uint32_t descriptorSize = m_d3d12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE descriptorHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), index, descriptorSize);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = format;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Texture2D.PlaneSlice = 0;
+    srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+    m_d3d12Device->CreateShaderResourceView(resource.get(), &srvDesc, descriptorHandle);
+
+    return descriptorHandle;
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::Device::CreateUAV(
+    const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format,
+    const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const
+{
+    uint32_t descriptorSize = m_d3d12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE descriptorHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), index, descriptorSize);
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+    uavDesc.Format = format;
+    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+    uavDesc.Texture2D.MipSlice = 0;
+    uavDesc.Texture2D.PlaneSlice = 0;
+    m_d3d12Device->CreateUnorderedAccessView(resource.get(), nullptr, &uavDesc, descriptorHandle);
+
+    return descriptorHandle;
 }

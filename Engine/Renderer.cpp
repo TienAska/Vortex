@@ -64,6 +64,8 @@ void Vortex::Renderer::Execute()
 
 	for (const std::unique_ptr<IRenderPass>& pass : m_passes)
 	{
+        ID3D12DescriptorHeap* heaps[] = { pass->GetDescriptorHeap() };
+        m_commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 		m_commandList->ExecuteBundle(pass->GetCommandList());
 	}
 
@@ -133,75 +135,7 @@ void Vortex::Renderer::WaitForPreviousFrame()
 //    UpdateSubresources(m_commandList.get(), m_srvResource.get(), uploadResource.get(), 0, 0, 1, &subresourceData);
 //}
 //
-//winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateResourceHeap()
-//{
-//	winrt::com_ptr<ID3D12DescriptorHeap> resourceHeap;
-//	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
-//	descriptorHeapDesc.NumDescriptors = 2;
-//	descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-//	descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-//	winrt::check_hresult(m_device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&resourceHeap)));
-//
-//	INT descriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-//	CD3DX12_CPU_DESCRIPTOR_HANDLE descriptorHandle(resourceHeap->GetCPUDescriptorHandleForHeapStart());
-//	// Constant buffer view
-//	{
-//		D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-//		D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_cbvResourceSize);
-//		winrt::check_hresult(m_device->CreateCommittedResource(
-//			&uploadHeapProperties,
-//			D3D12_HEAP_FLAG_NONE,
-//			&bufferDesc,
-//			D3D12_RESOURCE_STATE_GENERIC_READ,
-//			nullptr,
-//			IID_PPV_ARGS(&m_cbvResource)
-//		));
-//		m_cbvResource->SetName(L"CBV resource");
-//
-//		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-//		cbvDesc.BufferLocation = m_cbvResource->GetGPUVirtualAddress();
-//		cbvDesc.SizeInBytes = m_cbvResourceSize;
-//		m_device->CreateConstantBufferView(&cbvDesc, descriptorHandle);
-//	}
-//	descriptorHandle.Offset(1, descriptorSize);
-//
-//	// Shader resource view
-//	{
-//		//D3D12_HEAP_PROPERTIES defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-//		//D3D12_RESOURCE_DESC textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1024, 1024);
-//		//winrt::check_hresult(m_device->CreateCommittedResource(
-//		//	&defaultHeapProperties,
-//		//	D3D12_HEAP_FLAG_NONE,
-//		//	&textureDesc,
-//		//	D3D12_RESOURCE_STATE_COPY_DEST,
-//		//	nullptr,
-//		//	IID_PPV_ARGS(&m_srvResource)
-//		//));
-//
-//		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-//		srvDesc.Format = DXGI_FORMAT_R8_UNORM;
-//		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-//		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-//		srvDesc.Texture2D.MostDetailedMip = 0;
-//		srvDesc.Texture2D.MipLevels = 1;
-//		m_device->CreateShaderResourceView(m_srvResource.get(), &srvDesc, descriptorHandle);
-//	}
-//	descriptorHandle.Offset(1, descriptorSize);
-//
-//	//// Unordered access view
-//	//{
-//	//	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-//	//	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-//	//	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-//	//	uavDesc.Buffer.FirstElement = 0;
-//	//	uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-//	//	m_device->CreateUnorderedAccessView(m_uavResource.get(), nullptr, &uavDesc, descriptorHandle);
-//	//}
-//	//descriptorHandle.Offset(1, descriptorSize);
-//
-//
-//	return resourceHeap;
-//}
+
 //
 //winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateSamplerHeap()
 //{

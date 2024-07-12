@@ -4,10 +4,10 @@ typedef DirectX::XMMATRIX  float4x4;
 
 struct GlobalParameters
 {
-    float time;
     float4x4 model;
     float4x4 view;
     float4x4 projection;
+    float time;
 #ifdef __cplusplus
     float padding[15]; // The constant buffer is 256-byte aligned.
 #endif

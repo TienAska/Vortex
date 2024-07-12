@@ -82,5 +82,20 @@
     <CopyFileToFolders Include="Assets\Shaders\TriangleMS.hlsl">
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\ShaderUniforms.h">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\ProceduralPS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\ProceduralMS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\ProceduralAS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\Procedural.h">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>

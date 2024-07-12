@@ -31,8 +31,24 @@ namespace Vortex
 		{
 		public:
 			virtual ID3D12GraphicsCommandList* GetCommandList() const = 0;
+			virtual ID3D12DescriptorHeap* GetDescriptorHeap() const = 0;
 			virtual ~IRenderPass() = default;
+
 		};
+
+		//class RenderPass : public IRenderPass
+		//{
+		//public:
+		//	RenderPass()
+		//	{
+		//		Setup();
+		//		Execution();
+		//	}
+		//protected:
+		//	virtual void Setup();
+		//	virtual void Equip() const;
+		//	virtual void Execution() const;
+		//};
 
 	public:
         Renderer() = delete;
