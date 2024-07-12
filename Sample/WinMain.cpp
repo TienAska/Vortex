@@ -3,10 +3,10 @@
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
 
-#include <Vortex.h>
-#include <Renderer.h>
+#include "../Vortex/Vortex.h"
+#include "../Vortex/SimpleRenderer.h"
 
-std::shared_ptr<Vortex::Renderer> g_renderer;
+std::shared_ptr<SimpleRenderer> g_renderer;
 
 //CompositionHost* compHost = CompositionHost::GetInstance();
 
@@ -28,27 +28,39 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 	return 0;
 
 	case WM_KEYDOWN:
-		//switch (key)
-		//{
-		//case 'w':
-		//	camera->MoveForward(1.0f);
-		//	break;
-		//case 's':
-		//	camera->MoveForward(-1.0f);
-		//	break;
-		//case 'd':
-		//	camera->MoveRight(1.0f);
-		//	break;
-		//case 'a':
-		//	camera->MoveRight(-1.0f);
-		//	break;
-		//case 'e':
-		//	camera->MoveUp(1.0f);
-		//	break;
-		//case 'q':
-		//	camera->MoveUp(-1.0f);
-		//	break;
-		//}
+		switch (wParam)
+		{
+		case 'W':
+			g_renderer->MoveForward(1.0f);
+			break;
+		case 'S':
+			g_renderer->MoveForward(-1.0f);
+			break;
+		case 'D':
+			g_renderer->MoveRight(1.0f);
+			break;
+		case 'A':
+			g_renderer->MoveRight(-1.0f);
+			break;
+		case 'E':
+			g_renderer->MoveUp(1.0f);
+			break;
+		case 'Q':
+			g_renderer->MoveUp(-1.0f);
+			break;
+		case VK_UP:
+			g_renderer->RotateX(-1.0f);
+			break;
+		case VK_DOWN:
+			g_renderer->RotateX(1.0f);
+			break;
+		case VK_RIGHT:
+			g_renderer->RotateY(1.0f);
+			break;
+		case VK_LEFT:
+			g_renderer->RotateY(-1.0f);
+			break;
+		}
 		return 0;
 	case WM_KEYUP:
 		return 0;
@@ -57,6 +69,7 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 		//camera->Update();
 		if (g_renderer)
 		{
+			g_renderer->Update();
 			g_renderer->Render();
 		}
 		return 0;
@@ -74,6 +87,10 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
 {
 	winrt::init_apartment(winrt::apartment_type::single_threaded);
 	int result = ::MessageBox(::GetDesktopWindow(), L"Enter Vortex?", L"Sample", MB_YESNO | MB_ICONQUESTION);
+	if (result == IDNO)
+	{
+		return 0;
+	}
 	WNDCLASSEX windowClass = { 0 };
 	windowClass.cbSize = sizeof(WNDCLASSEX);
 	windowClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -103,25 +120,22 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
 	RECT rect;
 	winrt::check_hresult(::GetWindowRect(static_cast<HWND>(hwnd.get()), &rect));
 
-	g_renderer = std::make_shared<Vortex::Renderer>(static_cast<HWND>(hwnd.get()), rect.right - rect.left, rect.bottom - rect.top);
+	g_renderer = std::make_shared<SimpleRenderer>(static_cast<HWND>(hwnd.get()), rect.right - rect.left, rect.bottom - rect.top);
 
 
 
 	winrt::check_bool(bool(hwnd));
 
-	if (result == IDYES)
+	::ShowWindow(static_cast<HWND>(hwnd.detach()), nCmdShow);
+	// Main sample loop.
+	MSG msg = {};
+	while (msg.message != WM_QUIT)
 	{
-		::ShowWindow(static_cast<HWND>(hwnd.detach()), nCmdShow);
-		// Main sample loop.
-		MSG msg = {};
-		while (msg.message != WM_QUIT)
+		// Process any messages in the queue.
+		if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			// Process any messages in the queue.
-			if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				::TranslateMessage(&msg);
-				::DispatchMessage(&msg);
-			}
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
 		}
 	}
 

@@ -4,6 +4,12 @@
 #ifdef GetCurrentTime
 #undef GetCurrentTime
 #endif
+#include <dwmapi.h>
+#include <dxgi1_6.h>
+#include <d3d12.h>
+#include <d3dx12.h>
+#include <dxcapi.h>
+
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.System.h>

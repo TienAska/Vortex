@@ -1,7 +1,11 @@
 #include "pch.h"
 
 #include "Renderer.h"
+#include "DeviceManager.h"
 #include "Shader.h"
+#include "Assets/Shaders/ShaderUniforms.h"
+#include "MeshRenderPass.h"
+#include "ComputePipeline.h"
 
 extern "C" __declspec(dllexport) BSTR GetName()
 {
@@ -18,31 +22,9 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
 	m_scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height));
 
-	UINT dxgiFactoryFlags = 0;
+	m_textureFilename = L"Assets/Textures/Fabric_DishCloth_D.tif";
 
-#if defined(_DEBUG)
-	// Enable the debug layer (requires the Graphics Tools "optional feature").
-	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
-	{
-		winrt::com_ptr<ID3D12Debug> debugController;
-		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-		{
-			debugController->EnableDebugLayer();
-
-			// Enable additional debug layers.
-			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-		}
-	}
-#endif
-
-	winrt::com_ptr<IDXGIFactory6> factory;
-	winrt::check_hresult(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
-	winrt::com_ptr<IDXGIAdapter> hardwareAdapter;
-
-	if (SUCCEEDED(factory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&hardwareAdapter))))
-	{
-		winrt::check_hresult(D3D12CreateDevice(hardwareAdapter.get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&m_device)));
-	}
+	m_device = DeviceManager::GetDevice();
 
 	// Describe and create the command queue.
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -64,20 +46,31 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
 	winrt::com_ptr<IDXGISwapChain1> swapChain;
-	winrt::check_hresult(factory->CreateSwapChainForComposition(
+	//winrt::check_hresult(factory->CreateSwapChainForComposition(
+	//	m_commandQueue.get(),        // Swap chain needs the queue so that it can force a flush on it.
+	//	&swapChainDesc,
+	//	nullptr,
+	//	swapChain.put()
+	//));
+
+
+	//winrt::check_hresult(DCompositionCreateDevice(nullptr, IID_PPV_ARGS(&dcompDevice)));
+	//winrt::check_hresult(dcompDevice->CreateTargetForHwnd(hwnd, true, dcompTarget.put()));
+	//winrt::check_hresult(dcompDevice->CreateVisual(dcompVisual.put()));
+	//winrt::check_hresult(dcompVisual->SetContent(swapChain.get()));
+	//winrt::check_hresult(dcompTarget->SetRoot(dcompVisual.get()));
+	//winrt::check_hresult(dcompDevice->Commit());
+
+	winrt::com_ptr<IDXGIFactory6> factory = DeviceManager::GetFactory();
+	winrt::check_hresult(factory->CreateSwapChainForHwnd(
 		m_commandQueue.get(),        // Swap chain needs the queue so that it can force a flush on it.
+		hwnd,
 		&swapChainDesc,
+		nullptr,
 		nullptr,
 		swapChain.put()
 	));
 
-
-	winrt::check_hresult(DCompositionCreateDevice(nullptr, IID_PPV_ARGS(&dcompDevice)));
-	winrt::check_hresult(dcompDevice->CreateTargetForHwnd(hwnd, true, dcompTarget.put()));
-	winrt::check_hresult(dcompDevice->CreateVisual(dcompVisual.put()));
-	winrt::check_hresult(dcompVisual->SetContent(swapChain.get()));
-	winrt::check_hresult(dcompTarget->SetRoot(dcompVisual.get()));
-	winrt::check_hresult(dcompDevice->Commit());
 
 	// This sample does not support fullscreen transitions.
 	//winrt::check_hresult(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
@@ -88,11 +81,12 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	// Create descriptor heaps.
 	{
 		// Describe and create a render target view (RTV) descriptor heap.
-		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-		rtvHeapDesc.NumDescriptors = FrameCount;
-		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		winrt::check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+		//D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+		//rtvHeapDesc.NumDescriptors = FrameCount;
+		//rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		//rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		//winrt::check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+		m_rtvHeap = CreateRTVHeap();
 
 		m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	}
@@ -113,54 +107,18 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 	winrt::check_hresult(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 
 
-	// Create root signature.
-	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc;
-	versionedRootSignatureDesc.Init_1_1(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    m_rootSignature = CreateRootSignature();
 
-	winrt::com_ptr<ID3DBlob> signature;
-	winrt::com_ptr<ID3DBlob> error;
+	//m_pipelineState = CreateVertexPixelPSO(m_renderTargets[0], nullptr);
+	m_pipelineState = CreatePreceduralMeshPSO(m_rootSignature, m_renderTargets[0], nullptr);
 
-	winrt::check_hresult(D3D12SerializeVersionedRootSignature(&versionedRootSignatureDesc, signature.put(), error.put()));
-	winrt::check_hresult(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
-
-	// Compile shaders.
-	Shader vertexShader(L"TriangleVS");
-	Shader pixelShader(L"TrianglePS");
-
-
-	// Define the vertex input layout.
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
-
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-	psoDesc.pRootSignature = m_rootSignature.get();
-	psoDesc.VS = vertexShader.GetBytecode();
-	psoDesc.PS = pixelShader.GetBytecode();
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = m_renderTargets[0]->GetDesc().Format;
-	//psoDesc.DSVFormat = m_depthStencil->GetDesc().Format;
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);    // CW front; cull back
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);         // Opaque
-	//psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // Less-equal depth test w/ writes; no stencil
-	psoDesc.DepthStencilState.DepthEnable = FALSE;
-	psoDesc.DepthStencilState.StencilEnable = FALSE;
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.SampleDesc = DefaultSampleDesc();
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	winrt::check_hresult(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
-
+    auto device = m_device.as<ID3D12Device4>();
 	// Create the command list.
-	winrt::check_hresult(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.get(), m_pipelineState.get(), IID_PPV_ARGS(&m_commandList)));
+	winrt::check_hresult(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_commandList)));
 
 	// Command lists are created in the recording state, but there is nothing
 	// to record yet. The main loop expects it to be closed, so close it now.
-	winrt::check_hresult(m_commandList->Close());
+	//winrt::check_hresult(m_commandList->Close());
 
 	// Create the vertex buffer.
 	{
@@ -201,6 +159,16 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 		m_vertexBufferView.SizeInBytes = vertexBufferSize;
 	}
 
+	// Create resource heap.
+	{
+		m_cbvResourceSize = (sizeof(GlobalParameters) + 255) & ~255;
+		m_resourceHeap = CreateResourceHeap();
+		m_samplerHeap = CreateSamplerHeap();
+	}
+
+	// Create Compute pipeline
+	m_computePipeline = std::make_shared<ComputePipeline>();
+
 	// Create synchronization objects.
 	{
 		winrt::check_hresult(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
@@ -213,6 +181,10 @@ Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width),
 			winrt::check_hresult(HRESULT_FROM_WIN32(GetLastError()));
 		}
 	}
+
+
+	winrt::check_hresult(GameInputCreate(m_gameInput.put()));
+	//winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
 }
 
 Vortex::Renderer::~Renderer()
@@ -223,6 +195,61 @@ Vortex::Renderer::~Renderer()
 	WaitForPreviousFrame();
 
 	CloseHandle(m_fenceEvent);
+
+	m_gameInput->Release();
+	m_gameInput.detach();
+}
+
+void Vortex::Renderer::Update()
+{
+	// Get input.
+	IGameInputReading* reading;
+	if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard | GameInputKindMouse, nullptr, &reading)))
+	{
+		if (!m_gameDevice) reading->GetDevice(m_gameDevice.put());
+
+		std::vector<GameInputKeyState> keyState(reading->GetKeyCount());
+		reading->GetKeyState(static_cast<uint32_t>(keyState.size()), keyState.data());
+
+		GameInputMouseState mouseState;
+		if (reading->GetMouseState(&mouseState))
+		{
+			static GameInputMouseState lastState;
+			static float sensitivity = 0.1f;
+			if (mouseState.buttons & GameInputMouseRightButton)
+			{
+				float yaw = (mouseState.positionX - lastState.positionX) * sensitivity;
+				float pitch = (mouseState.positionY - lastState.positionY) * sensitivity;
+				lastState = mouseState;
+				m_camera.Rotate(0.0f, yaw);
+				m_camera.Rotate(pitch, 0.0f);
+			}
+		}
+
+		if (!keyState.empty() && keyState.front().virtualKey != '\0')
+		{
+			UploadTexture();
+		}
+		reading->Release();
+
+		// Update matrix to gpu.
+		static int size = 1;
+		UINT8* data;
+		auto model = DirectX::SimpleMath::Matrix::Identity;
+		//world *= DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
+		//world = m_camera.GetViewProjection().Transpose();
+		GlobalParameters globalParameters = { size, model.Transpose(), model.Transpose(), model.Transpose() };
+		CD3DX12_RANGE readRange(0, 0);
+		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
+		memcpy(data, &globalParameters, sizeof(GlobalParameters));
+		m_cbvResource->Unmap(0, nullptr);
+		size++;
+	}
+	else if (m_gameDevice)
+	{
+		m_gameDevice->Release();
+		m_gameDevice.detach();
+	}
 }
 
 void Vortex::Renderer::Render()
@@ -231,7 +258,7 @@ void Vortex::Renderer::Render()
 	PopulateCommandList();
 
 	// Execute the command list.
-	ID3D12CommandList* ppCommandLists[] = { m_commandList.get() };
+    ID3D12CommandList* ppCommandLists[] = { m_computePipeline->GetCommandList().get(), m_commandList.get() };
 	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	// Present the frame.
@@ -252,7 +279,12 @@ void Vortex::Renderer::PopulateCommandList()
 	// re-recording.
 	winrt::check_hresult(m_commandList->Reset(m_commandAllocator.get(), m_pipelineState.get()));
 
+	ID3D12DescriptorHeap* heaps[] = { m_resourceHeap.get(), m_samplerHeap.get() };
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
+	m_commandList->SetDescriptorHeaps(2, heaps);
+	m_commandList->SetGraphicsRootDescriptorTable(0, m_resourceHeap->GetGPUDescriptorHandleForHeapStart());
+	m_commandList->SetGraphicsRootDescriptorTable(1, m_samplerHeap->GetGPUDescriptorHandleForHeapStart());
+	//m_commandList->SetGraphicsRootConstantBufferView(0, m_cbvResource->GetGPUVirtualAddress());
 	m_commandList->RSSetViewports(1, &m_viewport);
 	m_commandList->RSSetScissorRects(1, &m_scissorRect);
 
@@ -266,9 +298,10 @@ void Vortex::Renderer::PopulateCommandList()
 	// Record commands.
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	m_commandList->DrawInstanced(3, 1, 0, 0);
+	//m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	//m_commandList->DrawInstanced(3, 1, 0, 0);
+	m_commandList->DispatchMesh(1, 1, 1);
 
 	// Indicate that the back buffer will now be used to present.
 	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -299,3 +332,126 @@ void Vortex::Renderer::WaitForPreviousFrame()
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
+void Vortex::Renderer::UploadTexture()
+{
+    D3D12_SUBRESOURCE_DATA subresourceData;
+    std::unique_ptr<uint8_t[]> decodedData;
+    winrt::check_hresult(DirectX::LoadWICTextureFromFile(m_device.get(), m_textureFilename.c_str(), m_srvResource.put(), decodedData, subresourceData));
+
+    winrt::com_ptr<ID3D12Resource> uploadResource;
+    const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_srvResource.get(), 0, 1);
+    D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+    winrt::check_hresult(m_device->CreateCommittedResource(
+        &uploadHeapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &bufferDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&uploadResource)
+    ));
+
+    UpdateSubresources(m_commandList.get(), m_srvResource.get(), uploadResource.get(), 0, 0, 1, &subresourceData);
+}
+
+winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateResourceHeap()
+{
+	winrt::com_ptr<ID3D12DescriptorHeap> resourceHeap;
+	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
+	descriptorHeapDesc.NumDescriptors = 2;
+	descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	winrt::check_hresult(m_device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&resourceHeap)));
+
+	INT descriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE descriptorHandle(resourceHeap->GetCPUDescriptorHandleForHeapStart());
+	// Constant buffer view
+	{
+		D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_cbvResourceSize);
+		winrt::check_hresult(m_device->CreateCommittedResource(
+			&uploadHeapProperties,
+			D3D12_HEAP_FLAG_NONE,
+			&bufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_cbvResource)
+		));
+		m_cbvResource->SetName(L"CBV resource");
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+		cbvDesc.BufferLocation = m_cbvResource->GetGPUVirtualAddress();
+		cbvDesc.SizeInBytes = m_cbvResourceSize;
+		m_device->CreateConstantBufferView(&cbvDesc, descriptorHandle);
+	}
+	descriptorHandle.Offset(1, descriptorSize);
+
+	// Shader resource view
+	{
+		D3D12_HEAP_PROPERTIES defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+		D3D12_RESOURCE_DESC textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1024, 1024);
+		winrt::check_hresult(m_device->CreateCommittedResource(
+			&defaultHeapProperties,
+			D3D12_HEAP_FLAG_NONE,
+			&textureDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			IID_PPV_ARGS(&m_srvResource)
+		));
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = textureDesc.Format;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 1;
+		m_device->CreateShaderResourceView(m_srvResource.get(), &srvDesc, descriptorHandle);
+	}
+	descriptorHandle.Offset(1, descriptorSize);
+
+	//// Unordered access view
+	//{
+	//	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	//	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	//	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	//	uavDesc.Buffer.FirstElement = 0;
+	//	uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+	//	m_device->CreateUnorderedAccessView(m_uavResource.get(), nullptr, &uavDesc, descriptorHandle);
+	//}
+	//descriptorHandle.Offset(1, descriptorSize);
+
+
+	return resourceHeap;
+}
+
+winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateSamplerHeap()
+{
+	winrt::com_ptr<ID3D12DescriptorHeap> samplerHeap;
+	D3D12_DESCRIPTOR_HEAP_DESC samplerHeapDesc = {};
+	samplerHeapDesc.NumDescriptors = 1;
+	samplerHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	samplerHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+	winrt::check_hresult(m_device->CreateDescriptorHeap(&samplerHeapDesc, IID_PPV_ARGS(&samplerHeap)));
+
+	D3D12_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	m_device->CreateSampler(&samplerDesc, samplerHeap->GetCPUDescriptorHandleForHeapStart());
+
+	return samplerHeap;
+}
+
+// Create descriptor heaps.
+winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Renderer::CreateRTVHeap()
+{
+	// Describe and create a render target view (RTV) descriptor heap.
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = FrameCount;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	winrt::check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+
+	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	return m_rtvHeap;
+}

@@ -1,8 +1,8 @@
 ﻿#include "pch.h"
-
 #include "Shader.h"
 
-
+#include <filesystem>
+#include <fstream>
 
 const winrt::hstring Vortex::Shader::s_shaderFolder = L"Assets/Shaders";
 

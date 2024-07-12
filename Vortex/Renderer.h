@@ -1,8 +1,12 @@
 #pragma once
 
+#include "Camera.h"
+
 namespace Vortex
 {
-	class VORTEX_API Renderer
+	class ComputePipeline;
+
+	class Renderer
 	{
 	public:
 		Renderer() = delete;
@@ -10,14 +14,19 @@ namespace Vortex
 		Renderer(HWND hwnd, UINT width, UINT height);
 		~Renderer();
 
+		void Update();
 		void Render();
-
+		Camera& GetCameraRef() { return m_camera; }
 
 		void PopulateCommandList();
 
 		void WaitForPreviousFrame();
 
 		winrt::com_ptr<IDXGISwapChain3> GetSwapChain() { return m_swapChain; }
+
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateResourceHeap();
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateSamplerHeap();
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateRTVHeap();
 	private:
 
 		static const UINT FrameCount = 2;
@@ -51,6 +60,17 @@ namespace Vortex
 		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
 
+		winrt::com_ptr<ID3D12DescriptorHeap> m_resourceHeap;
+		UINT m_cbvResourceSize;
+		winrt::com_ptr<ID3D12Resource> m_cbvResource;
+		winrt::hstring m_textureFilename;
+		winrt::com_ptr<ID3D12Resource> m_srvResource;
+		winrt::com_ptr<ID3D12Resource> m_uavResource;
+
+		winrt::com_ptr<ID3D12DescriptorHeap> m_samplerHeap;
+
+		void UploadTexture();
+
 		// Synchronization objects.
 		UINT m_frameIndex;
 		HANDLE m_fenceEvent;
@@ -62,42 +82,52 @@ namespace Vortex
 		UINT m_height;
 
 
-		inline HRESULT ReadDataFromFile(LPCWSTR filename, BYTE** data, UINT* size)
-		{
-			CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
-			extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
-			extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
-			extendedParams.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
-			extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
-			extendedParams.lpSecurityAttributes = nullptr;
-			extendedParams.hTemplateFile = nullptr;
+		// Objects
+		Camera m_camera;
 
-			winrt::file_handle file(CreateFile2(filename, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
-			if (file.get() == INVALID_HANDLE_VALUE)
-			{
-				throw std::exception();
-			}
+		// Input
+		winrt::com_ptr<IGameInput> m_gameInput;
+		winrt::com_ptr<IGameInputDevice> m_gameDevice;
 
-			FILE_STANDARD_INFO fileInfo = {};
-			if (!GetFileInformationByHandleEx(file.get(), FileStandardInfo, &fileInfo, sizeof(fileInfo)))
-			{
-				throw std::exception();
-			}
+		// Compute resource
+		std::shared_ptr<ComputePipeline> m_computePipeline;
 
-			if (fileInfo.EndOfFile.HighPart != 0)
-			{
-				throw std::exception();
-			}
+		//inline HRESULT ReadDataFromFile(LPCWSTR filename, BYTE** data, UINT* size)
+		//{
+		//	CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
+		//	extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+		//	extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+		//	extendedParams.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
+		//	extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+		//	extendedParams.lpSecurityAttributes = nullptr;
+		//	extendedParams.hTemplateFile = nullptr;
 
-			*data = reinterpret_cast<byte*>(malloc(fileInfo.EndOfFile.LowPart));
-			*size = fileInfo.EndOfFile.LowPart;
+		//	winrt::file_handle file(CreateFile2(filename, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
+		//	if (file.get() == INVALID_HANDLE_VALUE)
+		//	{
+		//		throw std::exception();
+		//	}
 
-			if (!ReadFile(file.get(), *data, fileInfo.EndOfFile.LowPart, nullptr, nullptr))
-			{
-				throw std::exception();
-			}
+		//	FILE_STANDARD_INFO fileInfo = {};
+		//	if (!GetFileInformationByHandleEx(file.get(), FileStandardInfo, &fileInfo, sizeof(fileInfo)))
+		//	{
+		//		throw std::exception();
+		//	}
 
-			return S_OK;
-		}
+		//	if (fileInfo.EndOfFile.HighPart != 0)
+		//	{
+		//		throw std::exception();
+		//	}
+
+		//	*data = reinterpret_cast<byte*>(malloc(fileInfo.EndOfFile.LowPart));
+		//	*size = fileInfo.EndOfFile.LowPart;
+
+		//	if (!ReadFile(file.get(), *data, fileInfo.EndOfFile.LowPart, nullptr, nullptr))
+		//	{
+		//		throw std::exception();
+		//	}
+
+		//	return S_OK;
+		//}
 	};
 }
