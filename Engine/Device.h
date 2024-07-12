@@ -24,13 +24,27 @@ namespace Vortex
 		Device(const winrt::com_ptr<IDXGIAdapter3>& adaptor);
 		// Variables
 		DXGI_ADAPTER_DESC2 m_adapterDesc;
-		winrt::com_ptr<ID3D12Device> m_d3d12Device;
+		winrt::com_ptr<ID3D12Device4> m_d3d12Device;
 		winrt::com_ptr<ID3D12DescriptorHeap> m_shaderVisibleHeap;
-		winrt::com_ptr<ID3D12DescriptorHeap> m_rtvHeap;
 	public:
 		// Functions
-		winrt::com_ptr<ID3D12CommandQueue> CreateCommandQueue() const;
-		winrt::com_ptr<IDXGISwapChain3> CreateSwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQueue, HWND hWnd, uint32_t width, uint32_t height, winrt::com_ptr<ID3D12Resource> renderTargets[VX_DOUBLE_BUFFER]);
+		winrt::com_ptr<ID3D12Fence1> CreateFence(uint64_t value) const;
+
+		winrt::com_ptr<ID3D12CommandQueue> CreateGraphicsCommandQueue() const;
+		winrt::com_ptr<ID3D12CommandQueue> CreateComputeCommandQueue() const;
+		winrt::com_ptr<ID3D12CommandQueue> CreateCopyCommandQueue() const;
+		winrt::com_ptr<ID3D12CommandAllocator> CreateGraphicsCommandAllocator() const;
+		winrt::com_ptr<ID3D12CommandAllocator> CreateComputeCommandAllocator() const;
+		winrt::com_ptr<ID3D12CommandAllocator> CreateCopyCommandAllocator() const;
+        winrt::com_ptr<ID3D12GraphicsCommandList6> CreateGraphicsCommandList() const;
+        winrt::com_ptr<ID3D12GraphicsCommandList6> CreateComputeCommandList() const;
+        winrt::com_ptr<ID3D12GraphicsCommandList6> CreateCopyCommandList() const;
+
+		winrt::com_ptr<IDXGISwapChain3> CreateSwapChain(
+			HWND hWnd, uint32_t width, uint32_t height,
+			const winrt::com_ptr<ID3D12CommandQueue>& commandQueue,
+			winrt::com_ptr<ID3D12Resource> renderTargets[VX_DOUBLE_BUFFER],
+            winrt::com_ptr<ID3D12DescriptorHeap>& rtvHeap, uint32_t& descriptorSize) const;
 		// Getters
         inline winrt::hstring GetDescription() const { return m_adapterDesc.Description; }
 	};

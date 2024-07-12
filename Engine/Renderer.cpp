@@ -3,119 +3,56 @@
 
 Vortex::SwapChain::SwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQueue, HWND hwnd, uint32_t width, uint32_t height)
 {
-	m_swapChain = VX_DEVICE0->CreateSwapChain(commandQueue, hwnd, width, height, m_renderTargets);
-	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+    m_swapChain = VX_DEVICE0->CreateSwapChain(hwnd, width, height, commandQueue, m_renderTargets, m_rtvDescriptorHeap, m_rtvDescriptorSize);
 }
 
-//Vortex::Renderer::Renderer(HWND hwnd, uint32_t width, uint32_t height)
-//{
-//	if (!Device::IsInitialized())
-//		Device::Initialize();
-//
-//	m_commandQueue = VX_DEVICE0->CreateCommandQueue();
-//}
-//
-//Vortex::Renderer::Renderer(HWND hwnd, UINT width, UINT height) : m_width(width), m_height(height)
-//{
-//
-//    m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_width), static_cast<float>(m_height));
-//    m_scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height));
-//
-//	winrt::check_hresult(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
-//
-//
-//    m_rootSignature = CreateRootSignature();
-//
-//	//m_pipelineState = CreateVertexPixelPSO(m_renderTargets[0], nullptr);
-//	m_pipelineState = CreatePreceduralMeshPSO(m_rootSignature, m_renderTargets[0], nullptr);
-//
-//    auto device = m_device.as<ID3D12Device4>();
-//	// Create the command list.
-//	winrt::check_hresult(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_commandList)));
-//
-//	// Command lists are created in the recording state, but there is nothing
-//	// to record yet. The main loop expects it to be closed, so close it now.
-//	//winrt::check_hresult(m_commandList->Close());
-//
-//	// Create the vertex buffer.
-//	{
-//		// Define the geometry for a triangle.
-//		Vertex triangleVertices[] =
-//		{
-//			{ { 0.0f, 0.25f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-//			{ { 0.25f, -0.25f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-//			{ { -0.25f, -0.25f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
-//		};
-//
-//		const UINT vertexBufferSize = sizeof(triangleVertices);
-//
-//		auto heap_pros = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-//		auto buffer = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
-//		// Note: using upload heaps to transfer static data like vert buffers is not 
-//		// recommended. Every time the GPU needs it, the upload heap will be marshalled 
-//		// over. Please read up on Default Heap usage. An upload heap is used here for 
-//		// code simplicity and because there are very few verts to actually transfer.
-//		winrt::check_hresult(m_device->CreateCommittedResource(
-//			&heap_pros,
-//			D3D12_HEAP_FLAG_NONE,
-//			&buffer,
-//			D3D12_RESOURCE_STATE_GENERIC_READ,
-//			nullptr,
-//			IID_PPV_ARGS(&m_vertexBuffer)));
-//
-//		// Copy the triangle data to the vertex buffer.
-//		UINT8* pVertexDataBegin;
-//		CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-//		winrt::check_hresult(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-//		memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
-//		m_vertexBuffer->Unmap(0, nullptr);
-//
-//		// Initialize the vertex buffer view.
-//		m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-//		m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-//		m_vertexBufferView.SizeInBytes = vertexBufferSize;
-//	}
-//
-//	// Create resource heap.
-//	{
-//		m_cbvResourceSize = (sizeof(GlobalParameters) + 255) & ~255;
-//		m_resourceHeap = CreateResourceHeap();
-//		m_samplerHeap = CreateSamplerHeap();
-//	}
-//
-//	// Create Compute pipeline
-//	m_computePipeline = std::make_shared<ComputePipeline>();
-//
-//	// Create synchronization objects.
-//	{
-//		winrt::check_hresult(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
-//		m_fenceValue = 1;
-//
-//		// Create an event handle to use for frame synchronization.
-//		m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-//		if (m_fenceEvent == nullptr)
-//		{
-//			winrt::check_hresult(HRESULT_FROM_WIN32(GetLastError()));
-//		}
-//	}
-//
-//
-//	winrt::check_hresult(GameInputCreate(m_gameInput.put()));
-//	//winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
-//}
-//
-//Vortex::Renderer::~Renderer()
-//{
-//
-//	// Ensure that the GPU is no longer referencing resources that are about to be
-//	// cleaned up by the destructor.
-//	WaitForPreviousFrame();
-//
-//	CloseHandle(m_fenceEvent);
-//
-//	m_gameInput->Release();
-//	m_gameInput.detach();
-//}
+winrt::com_ptr<ID3D12Resource> Vortex::SwapChain::GetBackBufferRenderTarget() const
+{
+	return m_renderTargets[m_swapChain->GetCurrentBackBufferIndex()];
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::SwapChain::GetBackBufferRTVHandle() const
+{
+	return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_swapChain->GetCurrentBackBufferIndex(), m_rtvDescriptorSize);
+}
+
+void Vortex::SwapChain::Flip()
+{
+	winrt::check_hresult(m_swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
+}
+
+Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
+	m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
+	m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
+	m_fenceEvent(::CreateEvent(nullptr, FALSE, FALSE, nullptr)), m_fenceValue(0)
+{
+	winrt::check_bool(bool{ m_fenceEvent });
+
+	if (!Device::IsInitialized())
+		Device::Initialize();
+
+	m_fence = VX_DEVICE0->CreateFence(m_fenceValue);
+	
+	m_commandQueue = VX_DEVICE0->CreateGraphicsCommandQueue();
+	m_commandAllocator = VX_DEVICE0->CreateGraphicsCommandAllocator();
+	m_commandList = VX_DEVICE0->CreateGraphicsCommandList();
+
+	m_swapChain = std::make_unique<SwapChain>(m_commandQueue, hWnd, width, height);
+
+	//winrt::check_hresult(GameInputCreate(m_gameInput.put()));
+	//winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
+}
+
+Vortex::Renderer::~Renderer()
+{
+	// Ensure that the GPU is no longer referencing resources that are about to be
+	// cleaned up by the destructor.
+	WaitForPreviousFrame();
+
+	m_fenceEvent.close();
+	//m_gameInput->Release();
+	//m_gameInput.detach();
+}
 //
 //void Vortex::Renderer::Update()
 //{
@@ -169,85 +106,57 @@ Vortex::SwapChain::SwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQu
 //	}
 //}
 //
-//void Vortex::Renderer::Render()
-//{
-//	// Record all the commands we need to render the scene into the command list.
-//	PopulateCommandList();
-//
-//	// Execute the command list.
-//    ID3D12CommandList* ppCommandLists[] = { m_computePipeline->GetCommandList().get(), m_commandList.get() };
-//	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-//
-//	// Present the frame.
-//	winrt::check_hresult(m_swapChain->Present(1, 0));
-//
-//	WaitForPreviousFrame();
-//}
-//
-//void Vortex::Renderer::PopulateCommandList()
-//{
-//	// Command list allocators can only be reset when the associated 
-//	// command lists have finished execution on the GPU; apps should use 
-//	// fences to determine GPU execution progress.
-//	winrt::check_hresult(m_commandAllocator->Reset());
-//
-//	// However, when ExecuteCommandList() is called on a particular command 
-//	// list, that command list can then be reset at any time and must be before 
-//	// re-recording.
-//	winrt::check_hresult(m_commandList->Reset(m_commandAllocator.get(), m_pipelineState.get()));
-//
-//	ID3D12DescriptorHeap* heaps[] = { m_resourceHeap.get(), m_samplerHeap.get(), m_computePipeline->GetDescriptorHeap().get() };
-//	m_commandList->SetDescriptorHeaps(3, heaps);
-//	m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
-//	m_commandList->SetGraphicsRootDescriptorTable(0, m_resourceHeap->GetGPUDescriptorHandleForHeapStart());
-//	m_commandList->SetGraphicsRootDescriptorTable(1, m_samplerHeap->GetGPUDescriptorHandleForHeapStart());
-//	//m_commandList->SetGraphicsRootConstantBufferView(0, m_cbvResource->GetGPUVirtualAddress());
-//	m_commandList->RSSetViewports(1, &m_viewport);
-//	m_commandList->RSSetScissorRects(1, &m_scissorRect);
-//
-//	// Indicate that the back buffer will be used as a render target.
-//	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-//	m_commandList->ResourceBarrier(1, &barrier);
-//
-//	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
-//	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-//
-//	// Record commands.
-//	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-//	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-//	//m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-//	//m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-//	//m_commandList->DrawInstanced(3, 1, 0, 0);
-//	m_commandList->DispatchMesh(1, 1, 1);
-//
-//	// Indicate that the back buffer will now be used to present.
-//	barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-//	m_commandList->ResourceBarrier(1, &barrier);
-//
-//	winrt::check_hresult(m_commandList->Close());
-//}
-//
-//void Vortex::Renderer::WaitForPreviousFrame()
-//{
-//	// WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
-//	// This is code implemented as such for simplicity. The D3D12HelloFrameBuffering
-//	// sample illustrates how to use fences for efficient resource usage and to
-//	// maximize GPU utilization.
-//
-//	// Signal and increment the fence value.
-//	const UINT64 fence = m_fenceValue;
-//	winrt::check_hresult(m_commandQueue->Signal(m_fence.get(), fence));
-//	m_fenceValue++;
-//
-//	// Wait until the previous frame is finished.
-//	if (m_fence->GetCompletedValue() < fence)
-//	{
-//		winrt::check_hresult(m_fence->SetEventOnCompletion(fence, m_fenceEvent));
-//		WaitForSingleObject(m_fenceEvent, INFINITE);
-//	}
-//
-//	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-//}
+void Vortex::Renderer::Render()
+{
+	WaitForPreviousFrame();
+
+	winrt::check_hresult(m_commandAllocator->Reset());
+	winrt::check_hresult(m_commandList->Reset(m_commandAllocator.get(), nullptr));
+
+	m_commandList->RSSetViewports(1, &m_viewport);
+	m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
+	auto transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_swapChain->GetBackBufferRenderTarget().get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_commandList->ResourceBarrier(1, &transitionBarrier);
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_swapChain->GetBackBufferRTVHandle();
+	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+	transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_swapChain->GetBackBufferRenderTarget().get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	m_commandList->ResourceBarrier(1, &transitionBarrier);
+
+	winrt::check_hresult(m_commandList->Close());
+
+	// Execute the command list.
+    ID3D12CommandList* ppCommandLists[] = { m_commandList.get() };
+	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	m_swapChain->Flip();
+}
+
+void Vortex::Renderer::WaitForPreviousFrame()
+{
+	// WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
+	// This is code implemented as such for simplicity. The D3D12HelloFrameBuffering
+	// sample illustrates how to use fences for efficient resource usage and to
+	// maximize GPU utilization.
+
+	// Signal and increment the fence value.
+	const uint64_t fence = m_fenceValue++;
+	winrt::check_hresult(m_commandQueue->Signal(m_fence.get(), fence));
+
+	// Wait until the previous frame is finished.
+	if (m_fence->GetCompletedValue() < fence)
+	{
+		winrt::check_hresult(m_fence->SetEventOnCompletion(fence, m_fenceEvent.get()));
+		::WaitForSingleObject(m_fenceEvent.get(), INFINITE);
+	}
+
+	//m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
 //
 //void Vortex::Renderer::UploadTexture()
 //{

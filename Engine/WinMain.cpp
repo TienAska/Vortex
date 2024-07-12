@@ -3,10 +3,17 @@
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+struct VortexInstance
+{
+    Vortex::Renderer* pRenderer;
+};
+
 _Use_decl_annotations_
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pCmdLine*/, int nCmdShow)
 {
     winrt::init_apartment(winrt::apartment_type::single_threaded);
+
+    VortexInstance vxInstance;
 
     // Initialize the window class.
     WNDCLASSEX windowClass = { 0 };
@@ -26,13 +33,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pC
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        CW_USEDEFAULT, CW_USEDEFAULT, 1280, 800,
 
         NULL,       // Parent window    
         NULL,       // Menu
         hInstance,  // Instance handle
-        NULL        // Additional application data
+        &vxInstance        // Additional application data
     );
+
+    vxInstance.pRenderer = new Vortex::Renderer(hWnd, 1280, 800);
 
     if (hWnd == NULL)
     {
@@ -53,22 +62,33 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pC
         }
     }
 
+    delete vxInstance.pRenderer;
+
     return 0;
 }
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    VortexInstance* vxInstance = reinterpret_cast<VortexInstance*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
+
     switch (uMsg)
     {
     case WM_CREATE:
     {
         DWM_WINDOW_CORNER_PREFERENCE preference = DWMWCP_DONOTROUND;
         ::DwmSetWindowAttribute(hWnd, DWMWA_WINDOW_CORNER_PREFERENCE, &preference, sizeof(preference));
+
+        // Save the DXSample* passed in to CreateWindow.
+        LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
+        ::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
         break;
     }
     case WM_PAINT:
     {
-
+        if (vxInstance->pRenderer)
+        {
+            vxInstance->pRenderer->Render();
+        }
         break;
     }
     case WM_DESTROY:

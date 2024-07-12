@@ -37,22 +37,100 @@ Vortex::Device::Device(const winrt::com_ptr<IDXGIAdapter3>& adaptor)
     winrt::check_hresult(D3D12CreateDevice(adaptor.get(), level, IID_PPV_ARGS(&m_d3d12Device)));
 }
 
-winrt::com_ptr<ID3D12CommandQueue> Vortex::Device::CreateCommandQueue() const
+winrt::com_ptr<ID3D12Fence1> Vortex::Device::CreateFence(uint64_t value) const
+{
+    winrt::com_ptr<ID3D12Fence1> fence;
+    winrt::check_hresult(m_d3d12Device->CreateFence(value, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
+    return fence;
+}
+
+winrt::com_ptr<ID3D12CommandQueue> Vortex::Device::CreateGraphicsCommandQueue() const
 {
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    queueDesc.NodeMask = 0;
 
     winrt::com_ptr<ID3D12CommandQueue> commandQueue;
     winrt::check_hresult(m_d3d12Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)));
     return commandQueue;
 }
 
-winrt::com_ptr<IDXGISwapChain3> Vortex::Device::CreateSwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQueue, HWND hWnd, uint32_t width, uint32_t height, winrt::com_ptr<ID3D12Resource> renderTargets[VX_DOUBLE_BUFFER])
+winrt::com_ptr<ID3D12CommandQueue> Vortex::Device::CreateComputeCommandQueue() const
 {
-    // This sample does not support full screen transitions.
-    winrt::check_hresult(s_dxgiFactory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER));
+    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+    queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    queueDesc.NodeMask = 0;
 
+    winrt::com_ptr<ID3D12CommandQueue> commandQueue;
+    winrt::check_hresult(m_d3d12Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)));
+    return commandQueue;
+}
+
+winrt::com_ptr<ID3D12CommandQueue> Vortex::Device::CreateCopyCommandQueue() const
+{
+    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+    queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    queueDesc.NodeMask = 0;
+
+    winrt::com_ptr<ID3D12CommandQueue> commandQueue;
+    winrt::check_hresult(m_d3d12Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)));
+    return commandQueue;
+}
+
+winrt::com_ptr<ID3D12CommandAllocator> Vortex::Device::CreateGraphicsCommandAllocator() const
+{
+    winrt::com_ptr<ID3D12CommandAllocator> commandAllocator;
+    winrt::check_hresult(m_d3d12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+    return commandAllocator;
+}
+
+winrt::com_ptr<ID3D12CommandAllocator> Vortex::Device::CreateComputeCommandAllocator() const
+{
+    winrt::com_ptr<ID3D12CommandAllocator> commandAllocator;
+    winrt::check_hresult(m_d3d12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COMPUTE, IID_PPV_ARGS(&commandAllocator)));
+    return commandAllocator;
+}
+
+winrt::com_ptr<ID3D12CommandAllocator> Vortex::Device::CreateCopyCommandAllocator() const
+{
+    winrt::com_ptr<ID3D12CommandAllocator> commandAllocator;
+    winrt::check_hresult(m_d3d12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&commandAllocator)));
+    return commandAllocator;
+}
+
+winrt::com_ptr<ID3D12GraphicsCommandList6> Vortex::Device::CreateGraphicsCommandList() const
+{
+    winrt::com_ptr<ID3D12GraphicsCommandList6> commandList;
+    winrt::check_hresult(m_d3d12Device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
+    return commandList;
+}
+
+winrt::com_ptr<ID3D12GraphicsCommandList6> Vortex::Device::CreateComputeCommandList() const
+{
+    winrt::com_ptr<ID3D12GraphicsCommandList6> commandList;
+    winrt::check_hresult(m_d3d12Device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COMPUTE, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
+    return commandList;
+}
+
+winrt::com_ptr<ID3D12GraphicsCommandList6> Vortex::Device::CreateCopyCommandList() const
+{
+    winrt::com_ptr<ID3D12GraphicsCommandList6> commandList;
+    winrt::check_hresult(m_d3d12Device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
+    return commandList;
+}
+
+winrt::com_ptr<IDXGISwapChain3> Vortex::Device::CreateSwapChain(
+    HWND hWnd, uint32_t width, uint32_t height,
+    const winrt::com_ptr<ID3D12CommandQueue>& commandQueue,
+    winrt::com_ptr<ID3D12Resource> renderTargets[VX_DOUBLE_BUFFER],
+    winrt::com_ptr<ID3D12DescriptorHeap>& rtvHeap, uint32_t& descriptorSize) const
+{
     // Create a swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = width;
@@ -66,8 +144,12 @@ winrt::com_ptr<IDXGISwapChain3> Vortex::Device::CreateSwapChain(const winrt::com
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+    swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
     winrt::com_ptr<IDXGISwapChain1> swapChain;
     winrt::check_hresult(s_dxgiFactory->CreateSwapChainForHwnd(commandQueue.get(), hWnd, &swapChainDesc, nullptr, nullptr, swapChain.put()));
+
+    // This sample does not support full screen transitions.
+    winrt::check_hresult(s_dxgiFactory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER));
 
     // Create a RTV heap.
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
@@ -75,16 +157,16 @@ winrt::com_ptr<IDXGISwapChain3> Vortex::Device::CreateSwapChain(const winrt::com
     heapDesc.NumDescriptors = VX_DOUBLE_BUFFER;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     heapDesc.NodeMask = 0;
-    winrt::check_hresult(m_d3d12Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+    winrt::check_hresult(m_d3d12Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeap)));
 
     // Get render targets from swap chain and create the RTVs.
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
-    uint32_t rtvDescriptorSize = m_d3d12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart());
+    descriptorSize = m_d3d12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     for (uint32_t i = 0; i < VX_DOUBLE_BUFFER; ++i)
     {
         winrt::check_hresult(swapChain->GetBuffer(i, IID_PPV_ARGS(&renderTargets[i])));
         m_d3d12Device->CreateRenderTargetView(renderTargets[i].get(), nullptr, rtvHandle);
-        rtvHandle.Offset(1, rtvDescriptorSize);
+        rtvHandle.Offset(1, descriptorSize);
     }
 
     return swapChain.as<IDXGISwapChain3>();
