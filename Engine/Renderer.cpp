@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "Renderer.h"
 
-Vortex::SwapChain::SwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQueue, HWND hwnd, uint32_t width, uint32_t height)
+Vortex::SwapChain::SwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQueue, HWND hwnd, uint32_t width, uint32_t height) :
+    m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
+    m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height))
 {
     m_swapChain = VX_DEVICE0->CreateSwapChain(hwnd, width, height, commandQueue, m_renderTargets, m_rtvDescriptorHeap, m_rtvDescriptorSize);
 }
@@ -22,8 +24,6 @@ void Vortex::SwapChain::Flip()
 }
 
 Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
-	m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
-	m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
 	m_fenceEvent(::CreateEvent(nullptr, FALSE, FALSE, nullptr)), m_fenceValue(0)
 {
 	winrt::check_bool(bool{ m_fenceEvent });
@@ -35,9 +35,10 @@ Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
 	
 	m_commandQueue = VX_DEVICE0->CreateGraphicsCommandQueue();
 	m_commandAllocator = VX_DEVICE0->CreateGraphicsCommandAllocator();
-	m_commandList = VX_DEVICE0->CreateGraphicsCommandList();
+	m_commandListBegin = VX_DEVICE0->CreateGraphicsCommandList();
+	m_commandListEnd = VX_DEVICE0->CreateGraphicsCommandList();
 
-	m_swapChain = std::make_unique<SwapChain>(m_commandQueue, hWnd, width, height);
+	m_swapChain = std::make_shared<SwapChain>(m_commandQueue, hWnd, width, height);
 
 	//winrt::check_hresult(GameInputCreate(m_gameInput.put()));
 	//winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
@@ -48,35 +49,39 @@ void Vortex::Renderer::Execute()
 	WaitForPreviousFrame();
 
 	winrt::check_hresult(m_commandAllocator->Reset());
-	winrt::check_hresult(m_commandList->Reset(m_commandAllocator.get(), nullptr));
-
-	m_commandList->RSSetViewports(1, &m_viewport);
-	m_commandList->RSSetScissorRects(1, &m_scissorRect);
+	// Begin frame.
+	winrt::check_hresult(m_commandListBegin->Reset(m_commandAllocator.get(), nullptr));
 
 	auto transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_swapChain->GetBackBufferRenderTarget().get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	m_commandList->ResourceBarrier(1, &transitionBarrier);
+	m_commandListBegin->ResourceBarrier(1, &transitionBarrier);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_swapChain->GetBackBufferRTVHandle();
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+	m_commandListBegin->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+	m_commandListBegin->RSSetViewports(1, m_swapChain->GetViewport());
+	m_commandListBegin->RSSetScissorRects(1, m_swapChain->GetScissorRect());
 
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	m_commandListBegin->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-	for (const std::unique_ptr<IRenderPass>& pass : m_passes)
-	{
-        ID3D12DescriptorHeap* heaps[] = { pass->GetDescriptorHeap() };
-        m_commandList->SetDescriptorHeaps(_countof(heaps), heaps);
-		m_commandList->ExecuteBundle(pass->GetCommandList());
-	}
-
+	winrt::check_hresult(m_commandListBegin->Close());
+	
+	// End frame.
+	winrt::check_hresult(m_commandListEnd->Reset(m_commandAllocator.get(), nullptr));
 	transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_swapChain->GetBackBufferRenderTarget().get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	m_commandList->ResourceBarrier(1, &transitionBarrier);
-
-	winrt::check_hresult(m_commandList->Close());
+	m_commandListEnd->ResourceBarrier(1, &transitionBarrier);
+	winrt::check_hresult(m_commandListEnd->Close());
 
 	// Execute the command list.
-    ID3D12CommandList* ppCommandLists[] = { m_commandList.get() };
-	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	std::vector<ID3D12CommandList*> commandLists;
+	commandLists.push_back(m_commandListBegin.get());
+	for (const std::unique_ptr<IRenderPass>& pass : m_passes)
+	{
+		commandLists.push_back(pass->GetCommandList(m_swapChain));
+	}
+	commandLists.push_back(m_commandListEnd.get());
+
+	m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandLists.size()), commandLists.data());
 
 	m_swapChain->Flip();
 }

@@ -42,7 +42,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pC
     );
 
     vxInstance.pRenderer = new Vortex::Renderer(hWnd, 1280, 800);
-    vxInstance.pRenderer->AddPass(Vortex::MeshRenderPass());
+    vxInstance.pRenderer->AddPass<Vortex::MeshRenderPass>();
 
     if (hWnd == NULL)
     {

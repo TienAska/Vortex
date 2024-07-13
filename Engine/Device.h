@@ -56,8 +56,13 @@ namespace Vortex
 
         winrt::com_ptr<ID3D12PipelineState> CreateMeshPSO(
             const winrt::com_ptr<ID3D12RootSignature>& rootSignature,
-            D3D12_SHADER_BYTECODE mesh, D3D12_SHADER_BYTECODE pixel,
-            D3D12_SHADER_BYTECODE amplification = { NULL, 0 }) const;
+            const D3D12_SHADER_BYTECODE& mesh, const D3D12_SHADER_BYTECODE& pixel,
+            const D3D12_SHADER_BYTECODE& amplification = { NULL, 0 }) const;
+
+        winrt::com_ptr<ID3D12PipelineState> CreateComputePSO(
+            const winrt::com_ptr<ID3D12RootSignature>& rootSignature,
+            const D3D12_SHADER_BYTECODE& compute) const;
+
 
 		winrt::com_ptr<ID3D12DescriptorHeap> CreateResourceHeap(uint32_t num) const;
 
@@ -68,16 +73,16 @@ namespace Vortex
 		winrt::com_ptr<ID3D12Resource> CreateUnorderedResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const;
 
 		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateCBV(
-			const winrt::com_ptr<ID3D12Resource>& resource, uint32_t sizeInBytes,
-			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const;
+			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
+			const winrt::com_ptr<ID3D12Resource>& resource, uint32_t sizeInBytes) const;
 
 		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateSRV(
-			const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format,
-			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const;
+			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
+            const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const;
 
 		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateUAV(
-			const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format,
-			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index) const;
+			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
+			const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const;
 
 
 		winrt::com_ptr<ID3D12DescriptorHeap> CreateSamplerHeap();
