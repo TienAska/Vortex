@@ -17,9 +17,23 @@ namespace Vortex
 		inline const CD3DX12_VIEWPORT* GetViewport() const { return &m_viewport; }
 		inline const CD3DX12_RECT* GetScissorRect() const { return &m_scissorRect; }
 
-		winrt::com_ptr<ID3D12Resource> GetBackBufferRenderTarget() const;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE GetBackBufferRTVHandle() const;
-		void Flip();
+		inline winrt::com_ptr<ID3D12Resource> GetBackBufferRenderTarget() const {
+			return m_renderTargets[m_swapChain->GetCurrentBackBufferIndex()]; 
+		}
+		inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetBackBufferRTVHandle() const {
+			return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_swapChain->GetCurrentBackBufferIndex(), m_rtvDescriptorSize); 
+		}
+
+        inline const CD3DX12_RESOURCE_BARRIER* GetTransitionToPresent() const {
+			return &m_transitionToPrenset[m_swapChain->GetCurrentBackBufferIndex()];
+		}
+		inline const CD3DX12_RESOURCE_BARRIER* GetTransitionToRenderTarget() const {
+			return &m_transitionToRenderTarget[m_swapChain->GetCurrentBackBufferIndex()];
+		}
+
+		inline void Flip()	{
+			winrt::check_hresult(m_swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
+		}
 	private:
         // Window relatives.
         CD3DX12_VIEWPORT m_viewport;
@@ -29,6 +43,9 @@ namespace Vortex
         winrt::com_ptr<ID3D12Resource> m_renderTargets[VX_DOUBLE_BUFFER];
 		winrt::com_ptr<ID3D12DescriptorHeap> m_rtvDescriptorHeap;
 		uint32_t m_rtvDescriptorSize;
+
+		CD3DX12_RESOURCE_BARRIER m_transitionToPrenset[VX_DOUBLE_BUFFER];
+		CD3DX12_RESOURCE_BARRIER m_transitionToRenderTarget[VX_DOUBLE_BUFFER];
 	};
 
 	class Renderer

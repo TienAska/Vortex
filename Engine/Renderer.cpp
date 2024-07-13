@@ -6,21 +6,10 @@ Vortex::SwapChain::SwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQu
     m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height))
 {
     m_swapChain = VX_DEVICE0->CreateSwapChain(hwnd, width, height, commandQueue, m_renderTargets, m_rtvDescriptorHeap, m_rtvDescriptorSize);
-}
-
-winrt::com_ptr<ID3D12Resource> Vortex::SwapChain::GetBackBufferRenderTarget() const
-{
-	return m_renderTargets[m_swapChain->GetCurrentBackBufferIndex()];
-}
-
-CD3DX12_CPU_DESCRIPTOR_HANDLE Vortex::SwapChain::GetBackBufferRTVHandle() const
-{
-	return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_swapChain->GetCurrentBackBufferIndex(), m_rtvDescriptorSize);
-}
-
-void Vortex::SwapChain::Flip()
-{
-	winrt::check_hresult(m_swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
+    m_transitionToPrenset[0] = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[0].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    m_transitionToPrenset[1] = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[1].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    m_transitionToRenderTarget[0] = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[0].get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    m_transitionToRenderTarget[1] = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[1].get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
 Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
@@ -49,38 +38,33 @@ void Vortex::Renderer::Execute()
 	WaitForPreviousFrame();
 
 	winrt::check_hresult(m_commandAllocator->Reset());
-	// Begin frame.
-	winrt::check_hresult(m_commandListBegin->Reset(m_commandAllocator.get(), nullptr));
 
-	auto transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_swapChain->GetBackBufferRenderTarget().get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	m_commandListBegin->ResourceBarrier(1, &transitionBarrier);
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_swapChain->GetBackBufferRTVHandle();
-	m_commandListBegin->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-
-	m_commandListBegin->RSSetViewports(1, m_swapChain->GetViewport());
-	m_commandListBegin->RSSetScissorRects(1, m_swapChain->GetScissorRect());
-
-	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	m_commandListBegin->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-
-	winrt::check_hresult(m_commandListBegin->Close());
-	
-	// End frame.
-	winrt::check_hresult(m_commandListEnd->Reset(m_commandAllocator.get(), nullptr));
-	transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_swapChain->GetBackBufferRenderTarget().get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	m_commandListEnd->ResourceBarrier(1, &transitionBarrier);
-	winrt::check_hresult(m_commandListEnd->Close());
-
-	// Execute the command list.
 	std::vector<ID3D12CommandList*> commandLists;
+	// Begin frame.
+	{
+		winrt::check_hresult(m_commandListBegin->Reset(m_commandAllocator.get(), nullptr));
+		m_commandListBegin->ResourceBarrier(1, m_swapChain->GetTransitionToRenderTarget());
+		static const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		m_commandListBegin->ClearRenderTargetView(m_swapChain->GetBackBufferRTVHandle(), clearColor, 0, nullptr);
+		winrt::check_hresult(m_commandListBegin->Close());
+	}
 	commandLists.push_back(m_commandListBegin.get());
+	
+	// Passes frames.
 	for (const std::unique_ptr<IRenderPass>& pass : m_passes)
 	{
 		commandLists.push_back(pass->GetCommandList(m_swapChain));
 	}
+
+	// End frame.
+	{
+		winrt::check_hresult(m_commandListEnd->Reset(m_commandAllocator.get(), nullptr));
+		m_commandListEnd->ResourceBarrier(1, m_swapChain->GetTransitionToPresent());
+		winrt::check_hresult(m_commandListEnd->Close());
+	}
 	commandLists.push_back(m_commandListEnd.get());
 
+	// Execute
 	m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandLists.size()), commandLists.data());
 
 	m_swapChain->Flip();
