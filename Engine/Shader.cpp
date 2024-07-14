@@ -117,6 +117,7 @@ void Vortex::Shader::Compile()
         L"-Fo", m_cacheFilename.c_str(),
 #if defined(_DEBUG)
         DXC_ARG_DEBUG,
+		L"-Qembed_debug",
         DXC_ARG_SKIP_OPTIMIZATIONS,
 #endif
     };

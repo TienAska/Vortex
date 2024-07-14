@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Assets/Shaders/ShaderUniforms.h"
+
 namespace Vortex
 {
 	class Shader

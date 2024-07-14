@@ -1,7 +1,8 @@
 #pragma once
 
-#define VX_DEVICE0 Vortex::Device::GetDevice0()
 #define VX_DOUBLE_BUFFER 2
+
+#define VX_DEVICE0 Vortex::Device::GetDevice0()
 
 namespace Vortex
 {
@@ -29,7 +30,6 @@ namespace Vortex
 		// Variables
 		DXGI_ADAPTER_DESC2 m_adapterDesc;
 		winrt::com_ptr<ID3D12Device4> m_d3d12Device;
-		winrt::com_ptr<ID3D12DescriptorHeap> m_shaderVisibleHeap;
 	public:
 		// Wrapped functions
 		winrt::com_ptr<ID3D12Fence1> CreateFence(uint64_t value) const;
@@ -53,9 +53,40 @@ namespace Vortex
             winrt::com_ptr<ID3D12DescriptorHeap>& rtvHeap, uint32_t& descriptorSize) const;
 
 		winrt::com_ptr<ID3D12RootSignature> CreateRootSignature(CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc) const;
+
         winrt::com_ptr<ID3D12PipelineState> CreateMeshPSO(
             const winrt::com_ptr<ID3D12RootSignature>& rootSignature,
-            D3D12_SHADER_BYTECODE mesh, D3D12_SHADER_BYTECODE pixel,
-            D3D12_SHADER_BYTECODE amplification = { NULL, 0 }) const;
+            const D3D12_SHADER_BYTECODE& mesh, const D3D12_SHADER_BYTECODE& pixel,
+            const D3D12_SHADER_BYTECODE& amplification = { NULL, 0 }) const;
+
+        winrt::com_ptr<ID3D12PipelineState> CreateComputePSO(
+            const winrt::com_ptr<ID3D12RootSignature>& rootSignature,
+            const D3D12_SHADER_BYTECODE& compute) const;
+
+
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateResourceHeap(uint32_t num) const;
+
+		winrt::com_ptr<ID3D12Resource> CreateConstantResource(uint32_t sizeInBytes) const;
+		
+		winrt::com_ptr<ID3D12Resource> CreateTextureResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const;
+
+		winrt::com_ptr<ID3D12Resource> CreateUnorderedResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const;
+
+		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateCBV(
+			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
+			const winrt::com_ptr<ID3D12Resource>& resource, uint32_t sizeInBytes) const;
+
+		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateSRV(
+			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
+            const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const;
+
+		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateUAV(
+			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
+			const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const;
+
+
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateSamplerHeap();
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateRTVHeap();
+		winrt::com_ptr<ID3D12DescriptorHeap> CreateDSVHeap();
 	};
 }
