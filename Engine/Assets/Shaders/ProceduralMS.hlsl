@@ -10,16 +10,14 @@ void main(in payload Payload payload, out indices uint3 indices[1], out vertices
     SetMeshOutputCounts(3, 1);
 
     indices[0] = uint3(0, 1, 2);
+    
+    float4 positions[3];
+    float2 uv[3];
+    FullscreenTriangle(positions, uv);
 
-    //vertices[0].position = mul(float4(0, 0.25, 0, 1), global.model);
-    vertices[0].position = float4(-1.0, 1.0, 0, 1);
-    vertices[0].uv0 = float2(0, 0);
-
-    //vertices[1].position = mul(float4(0.25, -0.25, 0, 1), global.model);
-    vertices[1].position = float4(3.0, 1.0, 0, 1);
-    vertices[1].uv0 = float2(2, 0);
-
-    //vertices[2].position = mul(float4(-0.25, -0.25, 0, 1), global.model);
-    vertices[2].position = float4(-1.0, -3.0, 0, 1);
-    vertices[2].uv0 = float2(0, 2);
+    [unroll] for(int i = 0; i < 3; i++)
+    {
+        vertices[i].position = positions[i];
+        vertices[i].uv0 = uv[i];
+    }
 }

@@ -34,8 +34,9 @@ namespace Vortex
                 rootParameter[1].InitAsDescriptorTable(1, &descRange[1]); // t0
                 rootParameter[2].InitAsDescriptorTable(1, &descRange[2]); // u0
 
-                CD3DX12_STATIC_SAMPLER_DESC staticSamplerDesc[1];
+                CD3DX12_STATIC_SAMPLER_DESC staticSamplerDesc[2];
                 staticSamplerDesc[0].Init(0, D3D12_FILTER_MIN_MAG_MIP_POINT); // s0
+                staticSamplerDesc[1].Init(1, D3D12_FILTER_MIN_MAG_MIP_LINEAR); // s1
 
                 CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc;
                 versionedRootSignatureDesc.Init_1_1(_countof(rootParameter), rootParameter, _countof(staticSamplerDesc), staticSamplerDesc);

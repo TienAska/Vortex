@@ -33,7 +33,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pC
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 1280, 800,
+        CW_USEDEFAULT, CW_USEDEFAULT, 640, 640,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -41,7 +41,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pC
         &vxInstance        // Additional application data
     );
 
-    vxInstance.pRenderer = new Vortex::Renderer(hWnd, 1280, 800);
+    vxInstance.pRenderer = new Vortex::Renderer(hWnd, 640, 640);
     vxInstance.pRenderer->AddPass<Vortex::MeshRenderPass>();
 
     if (hWnd == NULL)
