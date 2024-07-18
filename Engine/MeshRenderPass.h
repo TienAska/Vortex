@@ -17,7 +17,7 @@ namespace Vortex
                 m_constantResource = VX_DEVICE0->CreateConstantResource(sizeof(GlobalParameters));
                 m_gpuHandle0 = VX_DEVICE0->CreateCBV(m_descriptorHeap, 0, m_constantResource, sizeof(GlobalParameters));
 
-                m_textureResource = VX_DEVICE0->CreateTextureResource(DXGI_FORMAT_R8_UNORM, 32, 32);
+                m_textureResource = VX_DEVICE0->CreateTextureResource(DXGI_FORMAT_R8_UNORM, 32 * 32, 32 * 32);
                 m_gpuHandle1 = VX_DEVICE0->CreateSRV(m_descriptorHeap, 1, m_textureResource, DXGI_FORMAT_R8_UNORM);
 
                 m_gpuHandle2 = VX_DEVICE0->CreateUAV(m_descriptorHeap, 2, m_textureResource, DXGI_FORMAT_R8_UNORM);
@@ -78,7 +78,7 @@ namespace Vortex
             m_commandList->SetPipelineState(m_computePSO.get());
             m_commandList->SetComputeRootSignature(m_rootSignature.get());
             m_commandList->SetComputeRootDescriptorTable(2, m_gpuHandle2);
-            m_commandList->Dispatch(1, 1, 1);
+            m_commandList->Dispatch(32, 32, 1);
 
             // Graphics
             transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_textureResource.get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);

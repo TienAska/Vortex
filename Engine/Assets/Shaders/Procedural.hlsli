@@ -23,3 +23,15 @@ void FullscreenTriangle(out float4 position[3], out float2 uv[3])
 float random(float2 uv) {
     return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
 }
+
+float perlinNoise(uint2 cellCoord, float2 uv)
+{
+    float topLeft = random(cellCoord.xy);
+    float topRight = random(cellCoord.xy + int2(1, 0));
+    float bottomLeft = random(cellCoord.xy + int2(0, 1));
+    float buttomRight = random(cellCoord.xy + int2(1, 1));
+
+    float2 smoothUV = smoothstep(0.0, 1.0, uv);
+
+    return lerp(lerp(topLeft, topRight, smoothUV.x), lerp(bottomLeft, buttomRight, smoothUV.x), smoothUV.y);
+}

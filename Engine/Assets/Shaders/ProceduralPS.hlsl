@@ -25,17 +25,20 @@ float4 main(OutputToPixel input) : SV_TARGET
 //     float color = smoothstep(tile.x-0.3,tile.x,tile.y)-
 //             smoothstep(tile.x,tile.x+0.3,tile.y);
 
-    int3 index = int3(floor(32 * input.uv0), 0);
-    
-    float valueA = t_noise.Load(index);
-    float valueB = t_noise.Load(index + int3(1, 0, 0));
-    float valueC = t_noise.Load(index + int3(0, 1, 0));
-    float valueD = t_noise.Load(index + int3(1, 1, 0));
-    
-    float2 smoothUV = (smoothstep(0.0, 1.0, frac(32 * (input.uv0))) + floor(32 * input.uv0)) / 32;
-    smoothUV = smoothstep(0.0, 1.0, frac(32 * input.uv0));
-    
-    float value = lerp(lerp(valueA, valueB, smoothUV.x), lerp(valueC, valueD, smoothUV.x), smoothUV.y);
+    //int3 index = int3(floor(4 * input.uv0), 0);
+    //
+    //float valueA = t_noise.Load(index);
+    //float valueB = t_noise.Load(index + int3(1, 0, 0));
+    //float valueC = t_noise.Load(index + int3(0, 1, 0));
+    //float valueD = t_noise.Load(index + int3(1, 1, 0));
+    //
+    //float2 smoothUV = smoothstep(0.0, 1.0, frac(32 * input.uv0));
+    //float value = lerp(lerp(valueA, valueB, smoothUV.x), lerp(valueC, valueD, smoothUV.x), smoothUV.y);
+
+    //value = valueA;
+    //smoothUV = (smoothstep(0.0, 1.0, frac(32 * (input.uv0))) + floor(32 * input.uv0)) / 32;
+    //value = t_noise.Sample(s_linear, smoothUV);
+    float value = t_noise.Sample(s_linear, input.uv0);
 
     return value;
 }
