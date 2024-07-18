@@ -1,4 +1,4 @@
-#include "Procedural.h"
+#include "Procedural.hlsli"
 #include "ShaderUniforms.h"
 
 ConstantBuffer<GlobalParameters> global : register(b0);

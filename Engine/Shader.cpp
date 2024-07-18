@@ -48,7 +48,7 @@ Vortex::Shader::Shader(const winrt::hstring& name)
 	}
 	m_cacheFilename = cachePath.c_str();
 
-	if (!fs::exists(cachePath) || (fs::last_write_time(cachePath) < fs::last_write_time(filePath)))
+	//if (!fs::exists(cachePath) || (fs::last_write_time(cachePath) < fs::last_write_time(filePath)))
 	{
 		Compile();
 	}

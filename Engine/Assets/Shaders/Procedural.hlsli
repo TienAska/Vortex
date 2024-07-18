@@ -24,6 +24,18 @@ float random(float2 uv) {
     return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
 }
 
+float valueNoise(uint2 cellCoord, float2 uv)
+{
+    float topLeft = random(cellCoord.xy);
+    float topRight = random(cellCoord.xy + int2(1, 0));
+    float bottomLeft = random(cellCoord.xy + int2(0, 1));
+    float buttomRight = random(cellCoord.xy + int2(1, 1));
+
+    float2 smoothUV = uv * uv * (3.0 - 2.0 * uv);
+
+    return lerp(lerp(topLeft, topRight, smoothUV.x), lerp(bottomLeft, buttomRight, smoothUV.x), smoothUV.y);
+}
+
 float perlinNoise(uint2 cellCoord, float2 uv)
 {
     float topLeft = random(cellCoord.xy);
@@ -31,7 +43,7 @@ float perlinNoise(uint2 cellCoord, float2 uv)
     float bottomLeft = random(cellCoord.xy + int2(0, 1));
     float buttomRight = random(cellCoord.xy + int2(1, 1));
 
-    float2 smoothUV = smoothstep(0.0, 1.0, uv);
+    float2 smoothUV = uv * uv * uv * (uv * (uv * 6.0 - 15.0) + 10.0);
 
     return lerp(lerp(topLeft, topRight, smoothUV.x), lerp(bottomLeft, buttomRight, smoothUV.x), smoothUV.y);
 }

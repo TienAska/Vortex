@@ -12,5 +12,7 @@ void main(uint3 gid :SV_GroupID, uint3 gtid :SV_GroupThreadID, uint3 dtid :SV_Di
     uint3 cellSize = uint3(GROUP_SIZE_X, GROUP_SIZE_Y, GROUP_SIZE_Z);
     float2 inCellUV = (float2)gtid.xy / (cellSize.xy - 1);
     
-    noise[dtid.xy] = perlinNoise(gid, inCellUV);
+    noise[dtid.xy] = abs(perlinNoise(gid, inCellUV) - valueNoise(gid, inCellUV));
+    //noise[dtid.xy] = valueNoise(gid, inCellUV);
+    //noise[dtid.xy] = perlinNoise(gid, inCellUV);
 }
