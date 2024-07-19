@@ -4,6 +4,7 @@
 #ifdef GetCurrentTime
 #undef GetCurrentTime
 #endif
+#include <chrono>
 #include <dwmapi.h>
 #include <dxgi1_6.h>
 #include <d3d12.h>

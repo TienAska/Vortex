@@ -14,5 +14,5 @@ void main(uint3 gid :SV_GroupID, uint3 gtid :SV_GroupThreadID, uint3 dtid :SV_Di
     
     noise[dtid.xy] = abs(perlinNoise(gid, inCellUV) - valueNoise(gid, inCellUV));
     //noise[dtid.xy] = valueNoise(gid, inCellUV);
-    //noise[dtid.xy] = perlinNoise(gid, inCellUV);
+    noise[dtid.xy] = perlinNoise(gid, inCellUV);
 }

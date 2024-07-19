@@ -1,7 +1,4 @@
 #include "Procedural.hlsli"
-#include "ShaderUniforms.h"
-
-ConstantBuffer<GlobalParameters> global : register(b0);
 
 [outputtopology("triangle")]
 [numthreads(1, 1, 1)]

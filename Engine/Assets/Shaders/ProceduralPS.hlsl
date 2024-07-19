@@ -1,4 +1,7 @@
 #include "Procedural.hlsli"
+#include "ShaderUniforms.h"
+
+ConstantBuffer<GlobalParameters> global : register(b0);
 
 Texture2D<float> t_noise : register(t0);
 
@@ -38,7 +41,7 @@ float4 main(OutputToPixel input) : SV_TARGET
     //value = valueA;
     //smoothUV = (smoothstep(0.0, 1.0, frac(32 * (input.uv0))) + floor(32 * input.uv0)) / 32;
     //value = t_noise.Sample(s_linear, smoothUV);
-    float2 flipedUV = float2(input.uv0.x, 1 - input.uv0.y);
+    float2 flipedUV = float2(input.uv0.x - global.time, 1 - input.uv0.y);
     float value = t_noise.Sample(s_linear, flipedUV);
 
     return value;

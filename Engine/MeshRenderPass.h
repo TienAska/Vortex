@@ -8,14 +8,14 @@ namespace Vortex
     class MeshRenderPass : public Renderer::IRenderPass
     {
     public:
-        MeshRenderPass()
+        MeshRenderPass() :m_timeSinceStart(std::chrono::steady_clock::now()), m_globalParams(std::make_unique<GlobalParameters>())
         {
             // Create resources.
             {
                 m_descriptorHeap = VX_DEVICE0->CreateResourceHeap(3);
 
-                m_constantResource = VX_DEVICE0->CreateConstantResource(sizeof(GlobalParameters));
-                m_gpuHandle0 = VX_DEVICE0->CreateCBV(m_descriptorHeap, 0, m_constantResource, sizeof(GlobalParameters));
+                m_constantResource = VX_DEVICE0->CreateConstantResource((sizeof(GlobalParameters) + 255) & ~255);
+                m_gpuHandle0 = VX_DEVICE0->CreateCBV(m_descriptorHeap, 0, m_constantResource, (sizeof(GlobalParameters) + 255) & ~255);
 
                 m_textureResource = VX_DEVICE0->CreateTextureResource(DXGI_FORMAT_R8_UNORM, 32 * 32, 32 * 32);
                 m_gpuHandle1 = VX_DEVICE0->CreateSRV(m_descriptorHeap, 1, m_textureResource, DXGI_FORMAT_R8_UNORM);
@@ -24,17 +24,17 @@ namespace Vortex
             }
             // Create root signature.
             {
-                CD3DX12_DESCRIPTOR_RANGE1 descRange[3];
+                CD3DX12_DESCRIPTOR_RANGE1 descRange[3] = {};
                 descRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0
                 descRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
                 descRange[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
 
-                CD3DX12_ROOT_PARAMETER1 rootParameter[3];
+                CD3DX12_ROOT_PARAMETER1 rootParameter[3] = {};
                 rootParameter[0].InitAsDescriptorTable(1, &descRange[0]); // b0
                 rootParameter[1].InitAsDescriptorTable(1, &descRange[1]); // t0
                 rootParameter[2].InitAsDescriptorTable(1, &descRange[2]); // u0
 
-                CD3DX12_STATIC_SAMPLER_DESC staticSamplerDesc[2];
+                CD3DX12_STATIC_SAMPLER_DESC staticSamplerDesc[2] = {};
                 staticSamplerDesc[0].Init(0, D3D12_FILTER_MIN_MAG_MIP_POINT); // s0
                 staticSamplerDesc[1].Init(1, D3D12_FILTER_MIN_MAG_MIP_LINEAR); // s1
 
@@ -59,6 +59,17 @@ namespace Vortex
         }
 
         inline ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain) const override {
+            uint8_t* gpuPtr = nullptr;
+            CD3DX12_RANGE range(0, 0);
+            winrt::check_hresult(m_constantResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
+            //m_globalParams->time = std::chrono::duration_cast<std::chrono::duration<float>>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
+            m_globalParams->model = DirectX::XMMatrixIdentity();
+            m_globalParams->view = DirectX::XMMatrixIdentity();
+            m_globalParams->projection = DirectX::XMMatrixIdentity();
+            m_globalParams->time = 0.5f;
+            memcpy(gpuPtr, &m_globalParams, sizeof(GlobalParameters));
+            m_constantResource->Unmap(0, &range);
+
             winrt::check_hresult(m_commandAllocator->Reset());
             winrt::check_hresult(m_commandList->Reset(m_commandAllocator.get(), nullptr));
 
@@ -117,5 +128,8 @@ namespace Vortex
         // Command
         winrt::com_ptr<ID3D12CommandAllocator> m_commandAllocator;
         winrt::com_ptr<ID3D12GraphicsCommandList6> m_commandList;
+
+        std::chrono::time_point<std::chrono::steady_clock> m_timeSinceStart;
+        std::unique_ptr<GlobalParameters> m_globalParams;
     };
 }
