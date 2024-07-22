@@ -8,19 +8,7 @@ Texture2D<float> t_noise : register(t0);
 SamplerState s_point : register(s0);
 SamplerState s_linear : register(s1);
 
-float2 truchetPattern(float2 uv, float value){
-    value = frac(((value-0.5)*2.0));
-    if (value > 0.75) {
-        uv = float2(1.0, 1.0) - uv;
-    } else if (value > 0.5) {
-        uv = float2(1.0-uv.x,uv.y);
-    } else if (value > 0.25) {
-        uv = 1.0-float2(1.0-uv.x,uv.y);
-    }
-    return uv;
-}
-
-float4 main(OutputToPixel input) : SV_TARGET
+float4 main(VertexAttributes input) : SV_TARGET
 {
     // Maze
 //     float value = t_noise.Sample(s_point, input.uv0);

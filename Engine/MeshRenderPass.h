@@ -8,7 +8,7 @@ namespace Vortex
     class MeshRenderPass : public Renderer::IRenderPass
     {
     public:
-        MeshRenderPass() :m_timeSinceStart(std::chrono::steady_clock::now()), m_globalParams(std::make_unique<GlobalParameters>())
+        MeshRenderPass() :m_timeSinceStart(std::chrono::steady_clock::now()), m_globalParams(std::make_shared<GlobalParameters>())
         {
             // Create resources.
             {
@@ -62,13 +62,12 @@ namespace Vortex
             uint8_t* gpuPtr = nullptr;
             CD3DX12_RANGE range(0, 0);
             winrt::check_hresult(m_constantResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
-            //m_globalParams->time = std::chrono::duration_cast<std::chrono::duration<float>>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
             m_globalParams->model = DirectX::XMMatrixIdentity();
             m_globalParams->view = DirectX::XMMatrixIdentity();
             m_globalParams->projection = DirectX::XMMatrixIdentity();
-            m_globalParams->time = 0.5f;
-            memcpy(gpuPtr, &m_globalParams, sizeof(GlobalParameters));
-            m_constantResource->Unmap(0, &range);
+            m_globalParams->time = std::chrono::duration<float>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
+            memcpy(gpuPtr, m_globalParams.get(), sizeof(GlobalParameters));
+            m_constantResource->Unmap(0, nullptr);
 
             winrt::check_hresult(m_commandAllocator->Reset());
             winrt::check_hresult(m_commandList->Reset(m_commandAllocator.get(), nullptr));
@@ -130,6 +129,6 @@ namespace Vortex
         winrt::com_ptr<ID3D12GraphicsCommandList6> m_commandList;
 
         std::chrono::time_point<std::chrono::steady_clock> m_timeSinceStart;
-        std::unique_ptr<GlobalParameters> m_globalParams;
+        std::shared_ptr<GlobalParameters> m_globalParams;
     };
 }

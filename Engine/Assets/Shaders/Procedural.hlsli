@@ -3,11 +3,24 @@ struct Payload
     float padding;
 };
 
-struct OutputToPixel
+struct VertexAttributes
 {
     float4 position : SV_Position;
     float2 uv0 : TEXCOORD0;
 };
+
+void Quad(out float4 position[4], out float2 uv[4])
+{
+    position[0] = float4(-1.0,  1.0, 0.0, 1.0);
+    position[1] = float4( 1.0,  1.0, 0.0, 1.0);
+    position[2] = float4( 1.0, -1.0, 0.0, 1.0);
+    position[3] = float4(-1.0, -1.0, 0.0, 1.0);
+
+    uv[0] = float2(0.0, 0.0);
+    uv[1] = float2(1.0, 0.0);
+    uv[2] = float2(1.0, 1.0);
+    uv[3] = float2(0.0, 1.0);
+}
 
 void FullscreenTriangle(out float4 position[3], out float2 uv[3])
 {
@@ -18,6 +31,24 @@ void FullscreenTriangle(out float4 position[3], out float2 uv[3])
     uv[0] = float2(0.0, 0.0);
     uv[1] = float2(2.0, 0.0);
     uv[2] = float2(0.0, 2.0);
+}
+
+float2 truchetPattern(float2 uv, float value)
+{
+    value = frac(((value - 0.5) * 2.0));
+    if (value > 0.75)
+    {
+        uv = float2(1.0, 1.0) - uv;
+    }
+    else if (value > 0.5)
+    {
+        uv = float2(1.0 - uv.x, uv.y);
+    }
+    else if (value > 0.25)
+    {
+        uv = 1.0 - float2(1.0 - uv.x, uv.y);
+    }
+    return uv;
 }
 
 float random(float2 uv) {
