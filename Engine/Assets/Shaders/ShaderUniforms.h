@@ -1,6 +1,7 @@
 #ifdef __cplusplus
-typedef DirectX::XMMATRIX  float4x4;
-typedef DirectX::XMFLOAT3  float3;
+#include "Math.h"
+typedef Vortex::Matrix  float4x4;
+typedef Vortex::Vector3  float3;
 #endif
 
 struct GlobalParameters

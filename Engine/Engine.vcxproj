@@ -115,6 +115,7 @@
       <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)Assets\Shaders</DestinationFolders>
     </CopyFileToFolders>
     <ClInclude Include="Device.h" />
+    <ClInclude Include="Math.h" />
     <ClInclude Include="MeshRenderPass.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Renderer.h" />

@@ -76,7 +76,7 @@ namespace Vortex
             m_constantResource->Unmap(0, nullptr);
 
             winrt::check_hresult(m_materialResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
-            m_materialParams->offset = DirectX::XMFLOAT3{ 0.1f, 0.1f, 0.1f };
+            m_materialParams->offset = DirectX::XMVectorScale(DirectX::XMVectorSplatOne(), 0.1f);
             m_materialParams->scale = 0.1f;
             memcpy(gpuPtr, m_materialParams.get(), sizeof(MaterialParameters));
             m_materialResource->Unmap(0, nullptr);
