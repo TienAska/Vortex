@@ -8,7 +8,7 @@ Texture2D<float> t_noise : register(t0);
 SamplerState s_point : register(s0);
 SamplerState s_linear : register(s1);
 
-float4 main(VertexAttributes input) : SV_TARGET
+float4 main(VertexAttributes vertexInput, PrimitiveAttributes primitiveInput) : SV_TARGET
 {
     // Maze
 //     float value = t_noise.Sample(s_point, input.uv0);
@@ -29,9 +29,10 @@ float4 main(VertexAttributes input) : SV_TARGET
     //value = valueA;
     //smoothUV = (smoothstep(0.0, 1.0, frac(32 * (input.uv0))) + floor(32 * input.uv0)) / 32;
     //value = t_noise.Sample(s_linear, smoothUV);
-    float2 flipedUV = float2(input.uv0.x - global.time, 1 - input.uv0.y);
-    float value = t_noise.Sample(s_linear, flipedUV);
+    //float2 flipedUV = float2(input.uv0.x - global.time, 1 - input.uv0.y);
+    //float value = t_noise.Sample(s_linear, flipedUV);
         
+    
 
-    return float4(input.uv0, 0.0, 1.0);
+    return primitiveInput.color;
 }

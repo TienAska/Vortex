@@ -5,8 +5,13 @@ struct Payload
 
 struct VertexAttributes
 {
-    float4 position : SV_Position;
+    float4 positionHS : SV_Position;
     float2 uv0 : TEXCOORD0;
+};
+
+struct PrimitiveAttributes
+{
+    float4 color : COLOR0;
 };
 
 void Quad(out float4 position[4], out float2 uv[4])
