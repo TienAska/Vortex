@@ -11,10 +11,10 @@ struct VertexAttributes
 
 void Quad(out float4 position[4], out float2 uv[4])
 {
-    position[0] = float4(-1.0,  1.0, 0.0, 1.0);
-    position[1] = float4( 1.0,  1.0, 0.0, 1.0);
-    position[2] = float4( 1.0, -1.0, 0.0, 1.0);
-    position[3] = float4(-1.0, -1.0, 0.0, 1.0);
+    position[0] = float4(-1.0, -1.0, 0.0, 1.0);
+    position[1] = float4( 1.0, -1.0, 0.0, 1.0);
+    position[2] = float4( 1.0,  1.0, 0.0, 1.0);
+    position[3] = float4(-1.0,  1.0, 0.0, 1.0);
 
     uv[0] = float2(0.0, 0.0);
     uv[1] = float2(1.0, 0.0);

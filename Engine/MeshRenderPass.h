@@ -63,8 +63,8 @@ namespace Vortex
             CD3DX12_RANGE range(0, 0);
             winrt::check_hresult(m_constantResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
             m_globalParams->model = DirectX::XMMatrixIdentity();
-            m_globalParams->view = DirectX::XMMatrixIdentity();
-            m_globalParams->projection = DirectX::XMMatrixIdentity();
+            m_globalParams->view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH({ 0.0f, 1.0f, 1.0f}, { 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}));
+            m_globalParams->projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(90.0f, 1.0f, 0.01f, 1000.0f));
             m_globalParams->time = std::chrono::duration<float>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
             memcpy(gpuPtr, m_globalParams.get(), sizeof(GlobalParameters));
             m_constantResource->Unmap(0, nullptr);

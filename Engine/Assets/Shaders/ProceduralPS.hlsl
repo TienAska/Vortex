@@ -31,6 +31,7 @@ float4 main(VertexAttributes input) : SV_TARGET
     //value = t_noise.Sample(s_linear, smoothUV);
     float2 flipedUV = float2(input.uv0.x - global.time, 1 - input.uv0.y);
     float value = t_noise.Sample(s_linear, flipedUV);
+        
 
-    return value;
+    return float4(input.uv0, 0.0, 1.0);
 }

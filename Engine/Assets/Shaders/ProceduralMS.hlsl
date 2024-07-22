@@ -1,4 +1,7 @@
 #include "Procedural.hlsli"
+#include "ShaderUniforms.h"
+
+ConstantBuffer<GlobalParameters> global : register(b0);
 
 [outputtopology("triangle")]
 [numthreads(1, 1, 1)]
@@ -15,7 +18,7 @@ void main(in payload Payload payload, out indices uint3 indices[2], out vertices
 
     [unroll] for(int i = 0; i < 4; i++)
     {
-        vertices[i].position = positions[i];
+        vertices[i].position = mul(mul(positions[i], global.view), global.projection);
         vertices[i].uv0 = uv[i];
     }
 }
