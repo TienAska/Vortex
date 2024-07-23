@@ -91,10 +91,11 @@ namespace Vortex
 			m_passes.push_back(std::make_unique<T>()); 
 		}
 
-		//void Update();
 		void Execute();
 		//void PopulateCommandList();
 
+	private:
+		void Update();
 
 	private:
 		// Synchronization objects.
