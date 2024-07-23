@@ -15,18 +15,18 @@ namespace Vortex
         {
             // Create resources.
             {
-                m_descriptorHeap = VX_DEVICE0->CreateResourceHeap(4);
+                Vortex::Device::CreateResourceHeap(VX_0, 4);
 
                 m_constantResource = VX_DEVICE0->CreateConstantResource((sizeof(GlobalParameters) + 255) & ~255);
-                m_gpuHandle0 = VX_DEVICE0->CreateCBV(m_descriptorHeap, 0, m_constantResource, (sizeof(GlobalParameters) + 255) & ~255);
+                m_gpuHandle0 = VX_DEVICE0->CreateCBV(0, m_constantResource, (sizeof(GlobalParameters) + 255) & ~255);
                 
                 m_materialResource = VX_DEVICE0->CreateConstantResource((sizeof(MaterialParameters) + 255) & ~255);
-                m_gpuHandle1 = VX_DEVICE0->CreateCBV(m_descriptorHeap, 1, m_materialResource, (sizeof(MaterialParameters) + 255) & ~255);
+                m_gpuHandle1 = VX_DEVICE0->CreateCBV(1, m_materialResource, (sizeof(MaterialParameters) + 255) & ~255);
 
                 m_textureResource = VX_DEVICE0->CreateTextureResource(DXGI_FORMAT_R8_UNORM, 32 * 32, 32 * 32);
-                m_gpuHandle2 = VX_DEVICE0->CreateSRV(m_descriptorHeap, 2, m_textureResource, DXGI_FORMAT_R8_UNORM);
+                m_gpuHandle2 = VX_DEVICE0->CreateSRV(2, m_textureResource, DXGI_FORMAT_R8_UNORM);
 
-                m_gpuHandle3 = VX_DEVICE0->CreateUAV(m_descriptorHeap, 3, m_textureResource, DXGI_FORMAT_R8_UNORM);
+                m_gpuHandle3 = VX_DEVICE0->CreateUAV(3, m_textureResource, DXGI_FORMAT_R8_UNORM);
             }
             // Create root signature.
             {
@@ -90,8 +90,8 @@ namespace Vortex
             CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapChain->GetBackBufferRTVHandle();
             m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
-            ID3D12DescriptorHeap* heaps[] = { m_descriptorHeap.get() };
-            m_commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+            std::vector<ID3D12DescriptorHeap*> heaps = VX_DEVICE0->GetHeaps();
+            m_commandList->SetDescriptorHeaps(static_cast<uint32_t>(heaps.size()), heaps.data());
 
             // Compute
             auto transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_textureResource.get(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -116,7 +116,7 @@ namespace Vortex
             return m_commandList.get();
         }
 
-        inline ID3D12DescriptorHeap* GetDescriptorHeap() const override { return m_descriptorHeap.get(); }
+        //inline ID3D12DescriptorHeap* GetDescriptorHeap() const override { return m_descriptorHeap.get(); }
         //inline uint32_t GetResourceBarrier(const CD3DX12_RESOURCE_BARRIER*& barrier) const override
         //{
         //    barrier = new CD3DX12_RESOURCE_BARRIER(CD3DX12_RESOURCE_BARRIER::Transition(m_textureResource.get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
@@ -125,7 +125,6 @@ namespace Vortex
 
     private:
         // GPU Resource
-        winrt::com_ptr<ID3D12DescriptorHeap> m_descriptorHeap;
         winrt::com_ptr<ID3D12Resource> m_constantResource;
         winrt::com_ptr<ID3D12Resource> m_materialResource;
         winrt::com_ptr<ID3D12Resource> m_textureResource;

@@ -57,7 +57,7 @@ namespace Vortex
 			virtual ~IRenderPass() = default;
 
             inline virtual ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain) const = 0;
-            inline virtual ID3D12DescriptorHeap* GetDescriptorHeap() const = 0;
+            //inline virtual ID3D12DescriptorHeap* GetDescriptorHeap() const = 0;
 		};
 
 		//class RenderPass : public IRenderPass

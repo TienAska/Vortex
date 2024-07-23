@@ -3,6 +3,7 @@
 #define VX_DOUBLE_BUFFER 2
 
 #define VX_DEVICE0 Vortex::Device::GetDevice0()
+#define VX_0 0
 
 namespace Vortex
 {
@@ -65,6 +66,8 @@ namespace Vortex
 
 
 		winrt::com_ptr<ID3D12DescriptorHeap> CreateResourceHeap(uint32_t num) const;
+		
+		static void CreateResourceHeap(uint32_t deviceId, uint32_t num);
 
 		winrt::com_ptr<ID3D12Resource> CreateConstantResource(uint32_t sizeInBytes) const;
 		
@@ -76,17 +79,38 @@ namespace Vortex
 			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
 			const winrt::com_ptr<ID3D12Resource>& resource, uint32_t sizeInBytes) const;
 
+		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateCBV(uint32_t index, const winrt::com_ptr<ID3D12Resource>& resource, uint32_t sizeInBytes) const;
+
 		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateSRV(
 			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
             const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const;
+
+        CD3DX12_GPU_DESCRIPTOR_HANDLE CreateSRV(uint32_t index, const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const;
 
 		CD3DX12_GPU_DESCRIPTOR_HANDLE CreateUAV(
 			const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
 			const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const;
 
+        CD3DX12_GPU_DESCRIPTOR_HANDLE CreateUAV(uint32_t index, const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const;
+
 
 		winrt::com_ptr<ID3D12DescriptorHeap> CreateSamplerHeap();
 		winrt::com_ptr<ID3D12DescriptorHeap> CreateRTVHeap();
 		winrt::com_ptr<ID3D12DescriptorHeap> CreateDSVHeap();
+
+	private:
+		// GPU Resources
+		winrt::com_ptr<ID3D12DescriptorHeap> m_resourceHeap;
+		winrt::com_ptr<ID3D12DescriptorHeap> m_samplerHeap;
+		winrt::com_ptr<ID3D12DescriptorHeap> m_computeHeap;
+
+	public:
+		// Accessors
+        inline std::vector<ID3D12DescriptorHeap*> GetHeaps() {
+			std::vector<ID3D12DescriptorHeap*> heaps;
+			heaps.push_back(m_resourceHeap.get());
+			return heaps;
+		}
+		inline winrt::com_ptr<ID3D12DescriptorHeap> GetResourceHeap() { return m_resourceHeap; }
 	};
 }
