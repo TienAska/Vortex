@@ -13,7 +13,9 @@ Vortex::SwapChain::SwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQu
 }
 
 Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
-	m_fenceEvent(::CreateEvent(nullptr, FALSE, FALSE, nullptr)), m_fenceValue(0)
+	m_fenceEvent(::CreateEvent(nullptr, FALSE, FALSE, nullptr)), m_fenceValue(0),
+	m_timeSinceStart(std::chrono::steady_clock::now()),
+	m_globalParams(std::make_shared<GlobalParameters>())
 {
 	winrt::check_bool(bool{ m_fenceEvent });
 
@@ -31,6 +33,10 @@ Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
 
 	winrt::check_hresult(GameInputCreate(m_gameInput.put()));
 	//winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
+	
+	Vortex::Device::CreateResourceHeap(VX_0, 4);
+    m_constantResource = VX_DEVICE0->CreateConstantResource((sizeof(GlobalParameters) + 255) & ~255);
+    m_cbvGpuHandle = VX_DEVICE0->CreateCBV(0, m_constantResource, (sizeof(GlobalParameters) + 255) & ~255);
 }
 
 void Vortex::Renderer::Execute()
@@ -55,7 +61,7 @@ void Vortex::Renderer::Execute()
 	// Passes frames.
 	for (const std::unique_ptr<IRenderPass>& pass : m_passes)
 	{
-		commandLists.push_back(pass->GetCommandList(m_swapChain));
+		commandLists.push_back(pass->GetCommandList(m_swapChain, *this));
 	}
 
 	// End frame.
@@ -195,4 +201,14 @@ void Vortex::Renderer::Update()
 		m_gameDevice->Release();
 		m_gameDevice.detach();
 	}
+
+    uint8_t* gpuPtr = nullptr;
+    CD3DX12_RANGE range(0, 0);
+    winrt::check_hresult(m_constantResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
+    m_globalParams->model = DirectX::XMMatrixIdentity();
+    m_globalParams->view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH({ 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }));
+    m_globalParams->projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(90.0f, 1.0f, 0.01f, 1000.0f));
+    m_globalParams->time = std::chrono::duration<float>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
+    memcpy(gpuPtr, m_globalParams.get(), sizeof(GlobalParameters));
+    m_constantResource->Unmap(0, nullptr);
 }

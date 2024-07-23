@@ -9,17 +9,10 @@ namespace Vortex
     {
     public:
         MeshRenderPass() :
-            m_timeSinceStart(std::chrono::steady_clock::now()),
-            m_globalParams(std::make_shared<GlobalParameters>()),
             m_materialParams(std::make_shared<MaterialParameters>())
         {
             // Create resources.
             {
-                Vortex::Device::CreateResourceHeap(VX_0, 4);
-
-                m_constantResource = VX_DEVICE0->CreateConstantResource((sizeof(GlobalParameters) + 255) & ~255);
-                m_gpuHandle0 = VX_DEVICE0->CreateCBV(0, m_constantResource, (sizeof(GlobalParameters) + 255) & ~255);
-                
                 m_materialResource = VX_DEVICE0->CreateConstantResource((sizeof(MaterialParameters) + 255) & ~255);
                 m_gpuHandle1 = VX_DEVICE0->CreateCBV(1, m_materialResource, (sizeof(MaterialParameters) + 255) & ~255);
 
@@ -64,17 +57,9 @@ namespace Vortex
             }
         }
 
-        inline ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain) const override {
+        inline ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain, const Renderer& renderer) const override {
             uint8_t* gpuPtr = nullptr;
             CD3DX12_RANGE range(0, 0);
-            winrt::check_hresult(m_constantResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
-            m_globalParams->model = DirectX::XMMatrixIdentity();
-            m_globalParams->view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH({ 0.0f, 1.0f, 1.0f}, { 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}));
-            m_globalParams->projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(90.0f, 1.0f, 0.01f, 1000.0f));
-            m_globalParams->time = std::chrono::duration<float>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
-            memcpy(gpuPtr, m_globalParams.get(), sizeof(GlobalParameters));
-            m_constantResource->Unmap(0, nullptr);
-
             winrt::check_hresult(m_materialResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
             m_materialParams->offset = DirectX::XMVectorScale(DirectX::XMVectorSplatOne(), 0.1f);
             m_materialParams->scale = 0.1f;
@@ -107,7 +92,7 @@ namespace Vortex
             m_commandList->ResourceBarrier(1, &transitionBarrier);
             m_commandList->SetPipelineState(m_graphicsPSO.get());
             m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
-            m_commandList->SetGraphicsRootDescriptorTable(0, m_gpuHandle0);
+            m_commandList->SetGraphicsRootDescriptorTable(0, renderer.GetGlobalParamsHandle());
             m_commandList->SetGraphicsRootDescriptorTable(1, m_gpuHandle2);
             m_commandList->DispatchMesh(1, 1, 1);
 
@@ -125,18 +110,15 @@ namespace Vortex
 
     private:
         // GPU Resource
-        winrt::com_ptr<ID3D12Resource> m_constantResource;
         winrt::com_ptr<ID3D12Resource> m_materialResource;
         winrt::com_ptr<ID3D12Resource> m_textureResource;
-        CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandle0;
+        
         CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandle1;
         CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandle2;
         CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandle3;
 
         // CPU Resource
-        std::shared_ptr<GlobalParameters> m_globalParams;
         std::shared_ptr<MaterialParameters> m_materialParams;
-        std::chrono::time_point<std::chrono::steady_clock> m_timeSinceStart;
 
         // Pipeline
         winrt::com_ptr<ID3D12RootSignature> m_rootSignature;

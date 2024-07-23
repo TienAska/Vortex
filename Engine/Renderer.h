@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Device.h"
+#include "Shader.h"
 
 namespace Vortex
 {
@@ -56,7 +57,7 @@ namespace Vortex
 		public:
 			virtual ~IRenderPass() = default;
 
-            inline virtual ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain) const = 0;
+            inline virtual ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain, const Renderer& renderer) const = 0;
             //inline virtual ID3D12DescriptorHeap* GetDescriptorHeap() const = 0;
 		};
 
@@ -117,8 +118,17 @@ namespace Vortex
 		//uint32_t m_width;
 		//uint32_t m_height;
 
-		// Input
+		// GPU Resources.
+		winrt::com_ptr<ID3D12Resource> m_constantResource;
+		CD3DX12_GPU_DESCRIPTOR_HANDLE m_cbvGpuHandle;
+		// CPU Resources.
+		std::shared_ptr<GlobalParameters> m_globalParams;
+		std::chrono::time_point<std::chrono::steady_clock> m_timeSinceStart;
+		// Inputs.
 		winrt::com_ptr<IGameInput> m_gameInput;
 		winrt::com_ptr<IGameInputDevice> m_gameDevice;
+
+	public:
+        inline CD3DX12_GPU_DESCRIPTOR_HANDLE GetGlobalParamsHandle() const { return m_cbvGpuHandle; }
 	};
 }
