@@ -259,7 +259,7 @@ winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Device::CreateResourceHeap(uint32_t
 
 winrt::com_ptr<ID3D12Resource> Vortex::Device::CreateConstantResource( uint32_t sizeInBytes) const
 {
-    D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes);
     winrt::com_ptr<ID3D12Resource> resource;
     winrt::check_hresult(m_d3d12Device->CreateCommittedResource(

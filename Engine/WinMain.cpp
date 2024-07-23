@@ -8,6 +8,9 @@ struct VortexInstance
     Vortex::Renderer* pRenderer;
 };
 
+#define WINDOW_WIDTH 640
+#define WINDOW_HEIGHT 640
+
 _Use_decl_annotations_
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pCmdLine*/, int nCmdShow)
 {
@@ -33,7 +36,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pC
         WS_OVERLAPPEDWINDOW,            // Window style
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 1280, 800,
+        CW_USEDEFAULT, CW_USEDEFAULT, WINDOW_WIDTH, WINDOW_HEIGHT,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -41,7 +44,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pC
         &vxInstance        // Additional application data
     );
 
-    vxInstance.pRenderer = new Vortex::Renderer(hWnd, 1280, 800);
+    vxInstance.pRenderer = new Vortex::Renderer(hWnd, WINDOW_WIDTH, WINDOW_HEIGHT);
     vxInstance.pRenderer->AddPass<Vortex::MeshRenderPass>();
 
     if (hWnd == NULL)

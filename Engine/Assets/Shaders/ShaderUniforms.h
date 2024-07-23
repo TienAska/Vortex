@@ -1,5 +1,7 @@
 #ifdef __cplusplus
-typedef DirectX::XMMATRIX  float4x4;
+#include "Math.h"
+typedef Vortex::Matrix  float4x4;
+typedef Vortex::Vector3  float3;
 #endif
 
 struct GlobalParameters
@@ -8,7 +10,11 @@ struct GlobalParameters
     float4x4 view;
     float4x4 projection;
     float time;
-#ifdef __cplusplus
-    float padding[15]; // The constant buffer is 256-byte aligned.
-#endif
+    //float padding[15]; // The constant buffer is 256-byte aligned.
+};
+
+struct MaterialParameters
+{
+    float3 offset;
+    float scale;
 };

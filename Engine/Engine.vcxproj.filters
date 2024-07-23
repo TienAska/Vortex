@@ -39,7 +39,7 @@
     <ClInclude Include="Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ComputeRenderPass.h">
+    <ClInclude Include="Math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -97,7 +97,7 @@
     <CopyFileToFolders Include="Assets\Shaders\ProceduralAS.hlsl">
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Assets\Shaders\Procedural.h">
+    <CopyFileToFolders Include="Assets\Shaders\Procedural.hlsli">
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Assets\Shaders\NoiseCS.hlsl">
