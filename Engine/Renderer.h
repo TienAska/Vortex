@@ -117,7 +117,7 @@ namespace Vortex
 		//uint32_t m_height;
 
 		// Input
-		//winrt::com_ptr<IGameInput> m_gameInput;
-		//winrt::com_ptr<IGameInputDevice> m_gameDevice;
+		winrt::com_ptr<IGameInput> m_gameInput;
+		winrt::com_ptr<IGameInputDevice> m_gameDevice;
 	};
 }
