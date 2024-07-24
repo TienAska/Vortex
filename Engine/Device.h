@@ -72,6 +72,8 @@ namespace Vortex
 		winrt::com_ptr<ID3D12Resource> CreateConstantResource(uint32_t sizeInBytes) const;
 		
 		winrt::com_ptr<ID3D12Resource> CreateTextureResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const;
+		
+		winrt::com_ptr<ID3D12Resource> CreateTextureCubeResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const;
 
 		winrt::com_ptr<ID3D12Resource> CreateUnorderedResource(DXGI_FORMAT format, uint64_t width, uint32_t height) const;
 

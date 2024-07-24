@@ -8,8 +8,7 @@ namespace Vortex
     class MeshRenderPass : public Renderer::IRenderPass
     {
     public:
-        MeshRenderPass() :
-            m_materialParams(std::make_shared<MaterialParameters>())
+        MeshRenderPass() : m_materialParams(std::make_shared<MaterialParameters>())
         {
             // Create resources.
             {
@@ -57,7 +56,8 @@ namespace Vortex
             }
         }
 
-        inline ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain, const Renderer& renderer) const override {
+        inline ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain, const Renderer& renderer) const override 
+        {
             uint8_t* gpuPtr = nullptr;
             CD3DX12_RANGE range(0, 0);
             winrt::check_hresult(m_materialResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
@@ -97,7 +97,6 @@ namespace Vortex
             m_commandList->DispatchMesh(1, 1, 1);
 
             winrt::check_hresult(m_commandList->Close());
-
             return m_commandList.get();
         }
 

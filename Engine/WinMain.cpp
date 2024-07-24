@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "MeshRenderPass.h"
+#include "SkyboxRenderPass.h"
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -45,6 +46,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, PWSTR /*pC
     );
 
     vxInstance.pRenderer = new Vortex::Renderer(hWnd, WINDOW_WIDTH, WINDOW_HEIGHT);
+    vxInstance.pRenderer->AddPass<Vortex::SkyboxRenderPass>();
     vxInstance.pRenderer->AddPass<Vortex::MeshRenderPass>();
 
     if (hWnd == NULL)

@@ -45,6 +45,9 @@
     <ClInclude Include="Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SkyboxRenderPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -104,6 +107,15 @@
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Assets\Shaders\NoiseCS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\SkyboxMS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\Skybox.hlsli">
+      <Filter>Assets\Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Assets\Shaders\SkyboxPS.hlsl">
       <Filter>Assets\Shaders</Filter>
     </CopyFileToFolders>
   </ItemGroup>
