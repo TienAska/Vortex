@@ -12,9 +12,14 @@ namespace Vortex
         {
             //m_textureResource = VX_DEVICE0->CreateTextureResource(DXGI_FORMAT_R8_UNORM, 32 * 32, 32 * 32);
             //m_textureHanle = VX_DEVICE0->CreateSRV(4, m_textureResource, DXGI_FORMAT_R8_UNORM);
-            //CD3DX12_ROOT_PARAMETER1 rootParameter;
+            CD3DX12_DESCRIPTOR_RANGE1 descRange[1] = {};
+            descRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0
+
+            CD3DX12_ROOT_PARAMETER1 rootParameter[1] = {};
+            rootParameter[0].InitAsDescriptorTable(_countof(descRange), &descRange[0]);
+            
             CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc;
-            versionedRootSignatureDesc.Init_1_1(0, nullptr);
+            versionedRootSignatureDesc.Init_1_1(_countof(rootParameter), &rootParameter[0]);
 
             m_rootSignature = VX_DEVICE0->CreateRootSignature(versionedRootSignatureDesc);
 
@@ -37,7 +42,12 @@ namespace Vortex
             CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapChain->GetBackBufferRTVHandle();
             m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
+            std::vector<ID3D12DescriptorHeap*> heaps = VX_DEVICE0->GetHeaps();
+            m_commandList->SetDescriptorHeaps(static_cast<uint32_t>(heaps.size()), heaps.data());
+
             m_commandList->SetPipelineState(m_skyboxPSO.get());
+            m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
+            m_commandList->SetGraphicsRootDescriptorTable(0, renderer.GetGlobalParamsHandle());
             m_commandList->DispatchMesh(1, 1, 1);
 
             winrt::check_hresult(m_commandList->Close());

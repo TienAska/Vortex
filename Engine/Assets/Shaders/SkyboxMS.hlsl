@@ -1,4 +1,7 @@
 #include "Skybox.hlsli"
+#include "ShaderUniforms.h"
+
+ConstantBuffer<GlobalParameters> global : register(b0);
 
 [outputtopology("triangle")]
 [numthreads(1, 1, 1)]
@@ -11,8 +14,7 @@ void main(uint3 gid : SV_GroupID, out indices uint3 indices[12], out vertices Ve
 
     [unroll] for(int i = 0; i < 8; i++)
     {
-        //vertices[i].positionHS = mul(mul(mul(float4(position, 1.0), global.model), global.view), global.projection);
-        vertices[i].positionHS = positions[i];
+        vertices[i].positionHS = mul(mul(positions[i], global.view), global.projection);
         vertices[i].uvw = positions[i].xyz;
     }
 }
