@@ -9,24 +9,17 @@ namespace Vortex
     {
     public:
         MeshRenderPass() :
-            m_timeSinceStart(std::chrono::steady_clock::now()),
-            m_globalParams(std::make_shared<GlobalParameters>()),
             m_materialParams(std::make_shared<MaterialParameters>())
         {
             // Create resources.
             {
-                m_descriptorHeap = VX_DEVICE0->CreateResourceHeap(4);
-
-                m_constantResource = VX_DEVICE0->CreateConstantResource((sizeof(GlobalParameters) + 255) & ~255);
-                m_gpuHandle0 = VX_DEVICE0->CreateCBV(m_descriptorHeap, 0, m_constantResource, (sizeof(GlobalParameters) + 255) & ~255);
-                
                 m_materialResource = VX_DEVICE0->CreateConstantResource((sizeof(MaterialParameters) + 255) & ~255);
-                m_gpuHandle1 = VX_DEVICE0->CreateCBV(m_descriptorHeap, 1, m_materialResource, (sizeof(MaterialParameters) + 255) & ~255);
+                m_gpuHandle1 = VX_DEVICE0->CreateCBV(1, m_materialResource, (sizeof(MaterialParameters) + 255) & ~255);
 
                 m_textureResource = VX_DEVICE0->CreateTextureResource(DXGI_FORMAT_R8_UNORM, 32 * 32, 32 * 32);
-                m_gpuHandle2 = VX_DEVICE0->CreateSRV(m_descriptorHeap, 2, m_textureResource, DXGI_FORMAT_R8_UNORM);
+                m_gpuHandle2 = VX_DEVICE0->CreateSRV(2, m_textureResource, DXGI_FORMAT_R8_UNORM);
 
-                m_gpuHandle3 = VX_DEVICE0->CreateUAV(m_descriptorHeap, 3, m_textureResource, DXGI_FORMAT_R8_UNORM);
+                m_gpuHandle3 = VX_DEVICE0->CreateUAV(3, m_textureResource, DXGI_FORMAT_R8_UNORM);
             }
             // Create root signature.
             {
@@ -64,17 +57,9 @@ namespace Vortex
             }
         }
 
-        inline ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain) const override {
+        inline ID3D12GraphicsCommandList* GetCommandList(std::shared_ptr<SwapChain> swapChain, const Renderer& renderer) const override {
             uint8_t* gpuPtr = nullptr;
             CD3DX12_RANGE range(0, 0);
-            winrt::check_hresult(m_constantResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
-            m_globalParams->model = DirectX::XMMatrixIdentity();
-            m_globalParams->view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH({ 0.0f, 1.0f, 1.0f}, { 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}));
-            m_globalParams->projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(90.0f, 1.0f, 0.01f, 1000.0f));
-            m_globalParams->time = std::chrono::duration<float>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
-            memcpy(gpuPtr, m_globalParams.get(), sizeof(GlobalParameters));
-            m_constantResource->Unmap(0, nullptr);
-
             winrt::check_hresult(m_materialResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
             m_materialParams->offset = DirectX::XMVectorScale(DirectX::XMVectorSplatOne(), 0.1f);
             m_materialParams->scale = 0.1f;
@@ -90,8 +75,8 @@ namespace Vortex
             CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapChain->GetBackBufferRTVHandle();
             m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
-            ID3D12DescriptorHeap* heaps[] = { m_descriptorHeap.get() };
-            m_commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+            std::vector<ID3D12DescriptorHeap*> heaps = VX_DEVICE0->GetHeaps();
+            m_commandList->SetDescriptorHeaps(static_cast<uint32_t>(heaps.size()), heaps.data());
 
             // Compute
             auto transitionBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_textureResource.get(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -107,7 +92,7 @@ namespace Vortex
             m_commandList->ResourceBarrier(1, &transitionBarrier);
             m_commandList->SetPipelineState(m_graphicsPSO.get());
             m_commandList->SetGraphicsRootSignature(m_rootSignature.get());
-            m_commandList->SetGraphicsRootDescriptorTable(0, m_gpuHandle0);
+            m_commandList->SetGraphicsRootDescriptorTable(0, renderer.GetGlobalParamsHandle());
             m_commandList->SetGraphicsRootDescriptorTable(1, m_gpuHandle2);
             m_commandList->DispatchMesh(1, 1, 1);
 
@@ -116,7 +101,7 @@ namespace Vortex
             return m_commandList.get();
         }
 
-        inline ID3D12DescriptorHeap* GetDescriptorHeap() const override { return m_descriptorHeap.get(); }
+        //inline ID3D12DescriptorHeap* GetDescriptorHeap() const override { return m_descriptorHeap.get(); }
         //inline uint32_t GetResourceBarrier(const CD3DX12_RESOURCE_BARRIER*& barrier) const override
         //{
         //    barrier = new CD3DX12_RESOURCE_BARRIER(CD3DX12_RESOURCE_BARRIER::Transition(m_textureResource.get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
@@ -125,19 +110,15 @@ namespace Vortex
 
     private:
         // GPU Resource
-        winrt::com_ptr<ID3D12DescriptorHeap> m_descriptorHeap;
-        winrt::com_ptr<ID3D12Resource> m_constantResource;
         winrt::com_ptr<ID3D12Resource> m_materialResource;
         winrt::com_ptr<ID3D12Resource> m_textureResource;
-        CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandle0;
+        
         CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandle1;
         CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandle2;
         CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandle3;
 
         // CPU Resource
-        std::shared_ptr<GlobalParameters> m_globalParams;
         std::shared_ptr<MaterialParameters> m_materialParams;
-        std::chrono::time_point<std::chrono::steady_clock> m_timeSinceStart;
 
         // Pipeline
         winrt::com_ptr<ID3D12RootSignature> m_rootSignature;

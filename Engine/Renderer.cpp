@@ -13,7 +13,9 @@ Vortex::SwapChain::SwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQu
 }
 
 Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
-	m_fenceEvent(::CreateEvent(nullptr, FALSE, FALSE, nullptr)), m_fenceValue(0)
+	m_fenceEvent(::CreateEvent(nullptr, FALSE, FALSE, nullptr)), m_fenceValue(0),
+	m_timeSinceStart(std::chrono::steady_clock::now()),
+	m_globalParams(std::make_shared<GlobalParameters>())
 {
 	winrt::check_bool(bool{ m_fenceEvent });
 
@@ -29,13 +31,19 @@ Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
 
 	m_swapChain = std::make_shared<SwapChain>(m_commandQueue, hWnd, width, height);
 
-	//winrt::check_hresult(GameInputCreate(m_gameInput.put()));
+	winrt::check_hresult(GameInputCreate(m_gameInput.put()));
 	//winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
+	
+	Vortex::Device::CreateResourceHeap(VX_0, 4);
+    m_constantResource = VX_DEVICE0->CreateConstantResource((sizeof(GlobalParameters) + 255) & ~255);
+    m_cbvGpuHandle = VX_DEVICE0->CreateCBV(0, m_constantResource, (sizeof(GlobalParameters) + 255) & ~255);
 }
 
 void Vortex::Renderer::Execute()
 {
 	WaitForPreviousFrame();
+
+	Update();
 
 	winrt::check_hresult(m_commandAllocator->Reset());
 
@@ -53,7 +61,7 @@ void Vortex::Renderer::Execute()
 	// Passes frames.
 	for (const std::unique_ptr<IRenderPass>& pass : m_passes)
 	{
-		commandLists.push_back(pass->GetCommandList(m_swapChain));
+		commandLists.push_back(pass->GetCommandList(m_swapChain, *this));
 	}
 
 	// End frame.
@@ -144,55 +152,71 @@ void Vortex::Renderer::WaitForPreviousFrame()
 //	return samplerHeap;
 //}
 
-//
-//void Vortex::Renderer::Update()
-//{
-//	// Get input.
-//	IGameInputReading* reading;
-//	if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard | GameInputKindMouse, nullptr, &reading)))
-//	{
-//		if (!m_gameDevice) reading->GetDevice(m_gameDevice.put());
-//
-//		std::vector<GameInputKeyState> keyState(reading->GetKeyCount());
-//		reading->GetKeyState(static_cast<uint32_t>(keyState.size()), keyState.data());
-//
-//		GameInputMouseState mouseState;
-//		if (reading->GetMouseState(&mouseState))
-//		{
-//			static GameInputMouseState lastState;
-//			static float sensitivity = 0.1f;
-//			if (mouseState.buttons & GameInputMouseRightButton)
-//			{
-//				float yaw = (mouseState.positionX - lastState.positionX) * sensitivity;
-//				float pitch = (mouseState.positionY - lastState.positionY) * sensitivity;
-//				lastState = mouseState;
-//				m_camera.Rotate(0.0f, yaw);
-//				m_camera.Rotate(pitch, 0.0f);
-//			}
-//		}
-//
-//		if (!keyState.empty() && keyState.front().virtualKey != '\0')
-//		{
-//			UploadTexture();
-//		}
-//		reading->Release();
-//
-//		// Update matrix to gpu.
-//		static int size = 1;
-//		UINT8* data;
-//		auto model = DirectX::SimpleMath::Matrix::Identity;
-//		//world *= DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
-//		//world = m_camera.GetViewProjection().Transpose();
-//		GlobalParameters globalParameters = { size, model.Transpose(), model.Transpose(), model.Transpose() };
-//		CD3DX12_RANGE readRange(0, 0);
-//		winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
-//		memcpy(data, &globalParameters, sizeof(GlobalParameters));
-//		m_cbvResource->Unmap(0, nullptr);
-//		size++;
-//	}
-//	else if (m_gameDevice)
-//	{
-//		m_gameDevice->Release();
-//		m_gameDevice.detach();
-//	}
-//}
+
+void Vortex::Renderer::Update()
+{
+	// Get input.
+	winrt::com_ptr<IGameInputReading> reading;
+	if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard | GameInputKindMouse, nullptr, reading.put())))
+	{
+		if (!m_gameDevice) reading->GetDevice(m_gameDevice.put());
+
+		std::vector<GameInputKeyState> keyState(reading->GetKeyCount());
+		if (reading->GetKeyState(static_cast<uint32_t>(keyState.size()), keyState.data()))
+		{
+			//UploadTexture();
+			if (keyState.front().virtualKey == ' ')
+			{
+				m_globalParams->model = DirectX::XMMatrixIdentity();
+			}
+			else if(keyState.front().virtualKey == 'A')
+			{
+				m_globalParams->model = DirectX::XMMatrixTranspose(DirectX::XMMatrixTranslationFromVector(DirectX::XMVectorSet(-1.0f, 0.0f, 0.0f, 1.0f)));
+			}
+			m_globalParams->view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH({ 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }));
+			m_globalParams->projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(90.0f, 1.0f, 0.01f, 1000.0f));
+			m_globalParams->time = std::chrono::duration<float>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
+			
+
+			uint8_t* gpuPtr = nullptr;
+			CD3DX12_RANGE range(0, 0);
+			winrt::check_hresult(m_constantResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
+			memcpy(gpuPtr, m_globalParams.get(), sizeof(GlobalParameters));
+			m_constantResource->Unmap(0, nullptr);
+		}
+
+		GameInputMouseState mouseState;
+		if (reading->GetMouseState(&mouseState))
+		{
+			//static GameInputMouseState lastState;
+			//static float sensitivity = 0.1f;
+			if (mouseState.buttons & GameInputMouseRightButton)
+			{
+				//float yaw = (mouseState.positionX - lastState.positionX) * sensitivity;
+				//float pitch = (mouseState.positionY - lastState.positionY) * sensitivity;
+				//lastState = mouseState;
+				//m_camera.Rotate(0.0f, yaw);
+				//m_camera.Rotate(pitch, 0.0f);
+			}
+		}
+
+
+		// Update matrix to gpu.
+		//static int size = 1;
+		//UINT8* data;
+		//auto model = DirectX::SimpleMath::Matrix::Identity;
+		////world *= DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
+		////world = m_camera.GetViewProjection().Transpose();
+		//GlobalParameters globalParameters = { size, model.Transpose(), model.Transpose(), model.Transpose() };
+		//CD3DX12_RANGE readRange(0, 0);
+		//winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
+		//memcpy(data, &globalParameters, sizeof(GlobalParameters));
+		//m_cbvResource->Unmap(0, nullptr);
+		//size++;
+	}
+	else if (m_gameDevice)
+	{
+		m_gameDevice->Release();
+		m_gameDevice.detach();
+	}
+}

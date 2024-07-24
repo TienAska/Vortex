@@ -257,6 +257,12 @@ winrt::com_ptr<ID3D12DescriptorHeap> Vortex::Device::CreateResourceHeap(uint32_t
     return resourceHeap;
 }
 
+void Vortex::Device::CreateResourceHeap(uint32_t deviceId, uint32_t num)
+{
+    WINRT_ASSERT(deviceId == 0);
+    s_deviceList[deviceId].m_resourceHeap = s_deviceList[deviceId].CreateResourceHeap(num);
+}
+
 winrt::com_ptr<ID3D12Resource> Vortex::Device::CreateConstantResource( uint32_t sizeInBytes) const
 {
     D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -322,6 +328,11 @@ CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateCBV(
 }
 
 
+CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateCBV(uint32_t index, const winrt::com_ptr<ID3D12Resource>& resource, uint32_t sizeInBytes) const
+{
+    return CreateCBV(m_resourceHeap, index, resource, sizeInBytes);
+}
+
 CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateSRV(
     const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
     const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const
@@ -342,6 +353,11 @@ CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateSRV(
     return CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), index, descriptorSize);
 }
 
+CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateSRV(uint32_t index, const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const
+{
+    return CreateSRV(m_resourceHeap, index, resource, format);
+}
+
 CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateUAV(
     const winrt::com_ptr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t index,
     const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const
@@ -357,4 +373,9 @@ CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateUAV(
     m_d3d12Device->CreateUnorderedAccessView(resource.get(), nullptr, &uavDesc, descriptorHandle);
 
     return CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), index, descriptorSize);
+}
+
+CD3DX12_GPU_DESCRIPTOR_HANDLE Vortex::Device::CreateUAV(uint32_t index, const winrt::com_ptr<ID3D12Resource>& resource, DXGI_FORMAT format) const
+{
+    return CreateUAV(m_resourceHeap, index, resource, format);
 }

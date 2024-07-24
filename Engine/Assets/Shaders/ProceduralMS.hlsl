@@ -20,7 +20,7 @@ void main(uint3 gid : SV_GroupID, in payload Payload payload, out indices uint3 
     [unroll] for(int i = 0; i < 4; i++)
     {
         float3 position = (positions[i].xyz * material.scale) + material.offset * gid;
-        vertices[i].positionHS = mul(mul(float4(position, 1.0), global.view), global.projection);
+        vertices[i].positionHS = mul(mul(mul(float4(position, 1.0), global.model), global.view), global.projection);
         vertices[i].uv0 = uv[i];
     }
     primitives[0].color = float4(random(gid.xy).xxx, 1.0);
