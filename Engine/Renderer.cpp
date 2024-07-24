@@ -196,9 +196,9 @@ void Vortex::Renderer::Update()
                 float pitch = (mouseState.positionY - lastState.positionY) * sensitivity;
                 yaw = DirectX::XMConvertToRadians(yaw);
                 pitch = DirectX::XMConvertToRadians(pitch);
-                m_camera->Yaw(yaw);
-                m_camera->Pitch(pitch);
-                //m_camera->Rotate(yaw, pitch);
+                //m_camera->Yaw(yaw);
+                //m_camera->Pitch(pitch);
+                m_camera->Rotate(yaw, pitch);
             }
             lastState = mouseState;
         }

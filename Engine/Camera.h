@@ -13,15 +13,13 @@ namespace Vortex
         
         inline Matrix GetView() const
         {
-            DirectX::XMVECTOR forward = DirectX::XMVector3Rotate(DirectX::g_XMNegIdentityR1, m_rotation);
-            DirectX::XMVECTOR up = DirectX::XMVector3Rotate(DirectX::g_XMIdentityR2, m_rotation);
-            Matrix view = DirectX::XMMatrixLookToLH(m_position, forward, up);
+            Matrix view = DirectX::XMMatrixRotationQuaternion(m_rotation);
             return view;
         }
 
         inline Matrix GetProjection() const
         {
-            Matrix projection = DirectX::XMMatrixPerspectiveFovLH(90.0f, 1.0f, 0.0001f, 10000.0f);
+            Matrix projection = DirectX::XMMatrixPerspectiveFovLH(90.0f, 1.0f, 0.1f, 10000.0f);
             return projection;
         }
 
@@ -43,28 +41,29 @@ namespace Vortex
             m_position += DirectX::XMVectorScale(right, offset);
         }
 
-        inline void Yaw(float delta)
-        {
-            DirectX::XMVECTOR yawRotation = DirectX::XMQuaternionRotationRollPitchYaw(0, 0, delta);
-            m_rotation = DirectX::XMQuaternionMultiply(m_rotation, yawRotation);
-        }
+        //inline void Yaw(float delta)
+        //{
+        //    DirectX::XMVECTOR yawRotation = DirectX::XMQuaternionRotationAxis(DirectX::g_XMIdentityR2, delta);
+        //    m_rotation = DirectX::XMQuaternionMultiply(yawRotation, m_rotation);
+        //}
 
-        inline void Roll(float delta)
-        {
-            DirectX::XMVECTOR rollRotation = DirectX::XMQuaternionRotationRollPitchYaw(0, delta, 0);
-            m_rotation = DirectX::XMQuaternionMultiply(m_rotation, rollRotation);
-        }
+        //inline void Roll(float delta)
+        //{
+        //    DirectX::XMVECTOR rollRotation = DirectX::XMQuaternionRotationRollPitchYaw(0, delta, 0);
+        //    m_rotation = DirectX::XMQuaternionMultiply(m_rotation, rollRotation);
+        //}
 
-        inline void Pitch(float delta)
-        {
-            DirectX::XMVECTOR pitchRotation = DirectX::XMQuaternionRotationRollPitchYaw(delta, 0, 0);
-            m_rotation = DirectX::XMQuaternionMultiply(m_rotation, pitchRotation);
-        }
+        //inline void Pitch(float delta)
+        //{
+        //    DirectX::XMVECTOR pitchRotation = DirectX::XMQuaternionRotationAxis(DirectX::g_XMIdentityR0, delta);
+        //    m_rotation = DirectX::XMQuaternionMultiply(m_rotation, pitchRotation);
+        //}
 
         inline void Rotate(float yaw, float pitch)
         {
-            DirectX::XMVECTOR rotation = DirectX::XMQuaternionRotationRollPitchYaw(pitch, 0, yaw);
-            m_rotation = DirectX::XMQuaternionMultiply(m_rotation, rotation);
+            // m_rotation = yaw * m_rotation * pitch;
+            m_rotation = DirectX::XMQuaternionMultiply(DirectX::XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, yaw), m_rotation);
+            m_rotation = DirectX::XMQuaternionMultiply(m_rotation, DirectX::XMQuaternionRotationRollPitchYaw(pitch, 0.0f, 0.0f));
         }
 
     private:
