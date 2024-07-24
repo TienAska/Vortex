@@ -13,69 +13,70 @@ Vortex::SwapChain::SwapChain(const winrt::com_ptr<ID3D12CommandQueue>& commandQu
 }
 
 Vortex::Renderer::Renderer(HWND hWnd, uint32_t width, uint32_t height) :
-	m_fenceEvent(::CreateEvent(nullptr, FALSE, FALSE, nullptr)), m_fenceValue(0),
-	m_timeSinceStart(std::chrono::steady_clock::now()),
-	m_globalParams(std::make_shared<GlobalParameters>())
+    m_fenceEvent(::CreateEvent(nullptr, FALSE, FALSE, nullptr)), m_fenceValue(0),
+    m_timeSinceStart(std::chrono::steady_clock::now()),
+    m_camera(std::make_shared<Camera>()),
+    m_globalParams(std::make_shared<GlobalParameters>())
 {
-	winrt::check_bool(bool{ m_fenceEvent });
+    winrt::check_bool(bool{ m_fenceEvent });
 
-	if (!Device::IsInitialized())
-		Device::Initialize();
+    if (!Device::IsInitialized())
+        Device::Initialize();
 
-	m_fence = VX_DEVICE0->CreateFence(m_fenceValue);
-	
-	m_commandQueue = VX_DEVICE0->CreateGraphicsCommandQueue();
-	m_commandAllocator = VX_DEVICE0->CreateGraphicsCommandAllocator();
-	m_commandListBegin = VX_DEVICE0->CreateGraphicsCommandList();
-	m_commandListEnd = VX_DEVICE0->CreateGraphicsCommandList();
+    m_fence = VX_DEVICE0->CreateFence(m_fenceValue);
+    
+    m_commandQueue = VX_DEVICE0->CreateGraphicsCommandQueue();
+    m_commandAllocator = VX_DEVICE0->CreateGraphicsCommandAllocator();
+    m_commandListBegin = VX_DEVICE0->CreateGraphicsCommandList();
+    m_commandListEnd = VX_DEVICE0->CreateGraphicsCommandList();
 
-	m_swapChain = std::make_shared<SwapChain>(m_commandQueue, hWnd, width, height);
+    m_swapChain = std::make_shared<SwapChain>(m_commandQueue, hWnd, width, height);
 
-	winrt::check_hresult(GameInputCreate(m_gameInput.put()));
-	//winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
-	
-	Vortex::Device::CreateResourceHeap(VX_0, 4);
+    winrt::check_hresult(GameInputCreate(m_gameInput.put()));
+    //winrt::check_hresult(RegisterReadingCallback(m_gameMouse, GameInputKindMouse, 0, ));
+    
+    Vortex::Device::CreateResourceHeap(VX_0, 4);
     m_constantResource = VX_DEVICE0->CreateConstantResource((sizeof(GlobalParameters) + 255) & ~255);
     m_cbvGpuHandle = VX_DEVICE0->CreateCBV(0, m_constantResource, (sizeof(GlobalParameters) + 255) & ~255);
 }
 
 void Vortex::Renderer::Execute()
 {
-	WaitForPreviousFrame();
+    WaitForPreviousFrame();
 
-	Update();
+    Update();
 
-	winrt::check_hresult(m_commandAllocator->Reset());
+    winrt::check_hresult(m_commandAllocator->Reset());
 
-	std::vector<ID3D12CommandList*> commandLists;
-	// Begin frame.
-	{
-		winrt::check_hresult(m_commandListBegin->Reset(m_commandAllocator.get(), nullptr));
-		m_commandListBegin->ResourceBarrier(1, m_swapChain->GetTransitionToRenderTarget());
-		static const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		m_commandListBegin->ClearRenderTargetView(m_swapChain->GetBackBufferRTVHandle(), clearColor, 0, nullptr);
-		winrt::check_hresult(m_commandListBegin->Close());
-	}
-	commandLists.push_back(m_commandListBegin.get());
-	
-	// Passes frames.
-	for (const std::unique_ptr<IRenderPass>& pass : m_passes)
-	{
-		commandLists.push_back(pass->GetCommandList(m_swapChain, *this));
-	}
+    std::vector<ID3D12CommandList*> commandLists;
+    // Begin frame.
+    {
+        winrt::check_hresult(m_commandListBegin->Reset(m_commandAllocator.get(), nullptr));
+        m_commandListBegin->ResourceBarrier(1, m_swapChain->GetTransitionToRenderTarget());
+        static const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        m_commandListBegin->ClearRenderTargetView(m_swapChain->GetBackBufferRTVHandle(), clearColor, 0, nullptr);
+        winrt::check_hresult(m_commandListBegin->Close());
+    }
+    commandLists.push_back(m_commandListBegin.get());
+    
+    // Passes frames.
+    for (const std::unique_ptr<IRenderPass>& pass : m_passes)
+    {
+        commandLists.push_back(pass->GetCommandList(m_swapChain, *this));
+    }
 
-	// End frame.
-	{
-		winrt::check_hresult(m_commandListEnd->Reset(m_commandAllocator.get(), nullptr));
-		m_commandListEnd->ResourceBarrier(1, m_swapChain->GetTransitionToPresent());
-		winrt::check_hresult(m_commandListEnd->Close());
-	}
-	commandLists.push_back(m_commandListEnd.get());
+    // End frame.
+    {
+        winrt::check_hresult(m_commandListEnd->Reset(m_commandAllocator.get(), nullptr));
+        m_commandListEnd->ResourceBarrier(1, m_swapChain->GetTransitionToPresent());
+        winrt::check_hresult(m_commandListEnd->Close());
+    }
+    commandLists.push_back(m_commandListEnd.get());
 
-	// Execute
-	m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandLists.size()), commandLists.data());
+    // Execute
+    m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandLists.size()), commandLists.data());
 
-	m_swapChain->Flip();
+    m_swapChain->Flip();
 }
 
 Vortex::Renderer::~Renderer()
@@ -91,23 +92,23 @@ Vortex::Renderer::~Renderer()
 
 void Vortex::Renderer::WaitForPreviousFrame()
 {
-	// WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
-	// This is code implemented as such for simplicity. The D3D12HelloFrameBuffering
-	// sample illustrates how to use fences for efficient resource usage and to
-	// maximize GPU utilization.
+    // WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
+    // This is code implemented as such for simplicity. The D3D12HelloFrameBuffering
+    // sample illustrates how to use fences for efficient resource usage and to
+    // maximize GPU utilization.
 
-	// Signal and increment the fence value.
-	const uint64_t fence = m_fenceValue++;
-	winrt::check_hresult(m_commandQueue->Signal(m_fence.get(), fence));
+    // Signal and increment the fence value.
+    const uint64_t fence = m_fenceValue++;
+    winrt::check_hresult(m_commandQueue->Signal(m_fence.get(), fence));
 
-	// Wait until the previous frame is finished.
-	if (m_fence->GetCompletedValue() < fence)
-	{
-		winrt::check_hresult(m_fence->SetEventOnCompletion(fence, m_fenceEvent.get()));
-		::WaitForSingleObject(m_fenceEvent.get(), INFINITE);
-	}
+    // Wait until the previous frame is finished.
+    if (m_fence->GetCompletedValue() < fence)
+    {
+        winrt::check_hresult(m_fence->SetEventOnCompletion(fence, m_fenceEvent.get()));
+        ::WaitForSingleObject(m_fenceEvent.get(), INFINITE);
+    }
 
-	//m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+    //m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 //
 //void Vortex::Renderer::UploadTexture()
@@ -155,68 +156,65 @@ void Vortex::Renderer::WaitForPreviousFrame()
 
 void Vortex::Renderer::Update()
 {
-	// Get input.
-	winrt::com_ptr<IGameInputReading> reading;
-	if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard | GameInputKindMouse, nullptr, reading.put())))
-	{
-		if (!m_gameDevice) reading->GetDevice(m_gameDevice.put());
+    // Get input.
+    winrt::com_ptr<IGameInputReading> reading;
+    if (SUCCEEDED(m_gameInput->GetCurrentReading(GameInputKindKeyboard | GameInputKindMouse, nullptr, reading.put())))
+    {
+        if (!m_gameDevice) reading->GetDevice(m_gameDevice.put());
 
-		std::vector<GameInputKeyState> keyState(reading->GetKeyCount());
-		if (reading->GetKeyState(static_cast<uint32_t>(keyState.size()), keyState.data()))
-		{
-			//UploadTexture();
-			if (keyState.front().virtualKey == ' ')
-			{
-				m_globalParams->model = DirectX::XMMatrixIdentity();
-			}
-			else if(keyState.front().virtualKey == 'A')
-			{
-				m_globalParams->model = DirectX::XMMatrixTranspose(DirectX::XMMatrixTranslationFromVector(DirectX::XMVectorSet(-1.0f, 0.0f, 0.0f, 1.0f)));
-			}
-			m_globalParams->view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH({ 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }));
-			m_globalParams->projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(90.0f, 1.0f, 0.01f, 1000.0f));
-			m_globalParams->time = std::chrono::duration<float>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
-			
+        m_globalParams->model = DirectX::XMMatrixTranspose(DirectX::XMMatrixTranslationFromVector(DirectX::XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f)));
 
-			uint8_t* gpuPtr = nullptr;
-			CD3DX12_RANGE range(0, 0);
-			winrt::check_hresult(m_constantResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
-			memcpy(gpuPtr, m_globalParams.get(), sizeof(GlobalParameters));
-			m_constantResource->Unmap(0, nullptr);
-		}
-
-		GameInputMouseState mouseState;
-		if (reading->GetMouseState(&mouseState))
-		{
-			//static GameInputMouseState lastState;
-			//static float sensitivity = 0.1f;
-			if (mouseState.buttons & GameInputMouseRightButton)
-			{
-				//float yaw = (mouseState.positionX - lastState.positionX) * sensitivity;
-				//float pitch = (mouseState.positionY - lastState.positionY) * sensitivity;
-				//lastState = mouseState;
-				//m_camera.Rotate(0.0f, yaw);
-				//m_camera.Rotate(pitch, 0.0f);
-			}
-		}
+        std::vector<GameInputKeyState> keyState(reading->GetKeyCount());
+        if (reading->GetKeyState(static_cast<uint32_t>(keyState.size()), keyState.data()))
+        {
+            //UploadTexture();
+            if (keyState.front().virtualKey == ' ')
+            {
+                m_globalParams->model = DirectX::XMMatrixIdentity();
+            }
+            else if(keyState.front().virtualKey == 'A')
+            {
+                m_globalParams->model = DirectX::XMMatrixTranspose(DirectX::XMMatrixTranslationFromVector(DirectX::XMVectorSet(-1.0f, 0.0f, 0.0f, 1.0f)));
+            }
 
 
-		// Update matrix to gpu.
-		//static int size = 1;
-		//UINT8* data;
-		//auto model = DirectX::SimpleMath::Matrix::Identity;
-		////world *= DirectX::SimpleMath::Matrix::CreateScale(size * 0.01f);
-		////world = m_camera.GetViewProjection().Transpose();
-		//GlobalParameters globalParameters = { size, model.Transpose(), model.Transpose(), model.Transpose() };
-		//CD3DX12_RANGE readRange(0, 0);
-		//winrt::check_hresult(m_cbvResource->Map(0, &readRange, reinterpret_cast<void**>(&data)));
-		//memcpy(data, &globalParameters, sizeof(GlobalParameters));
-		//m_cbvResource->Unmap(0, nullptr);
-		//size++;
-	}
-	else if (m_gameDevice)
-	{
-		m_gameDevice->Release();
-		m_gameDevice.detach();
-	}
+        }
+
+        static float sensitivity = 0.1f;
+        GameInputMouseState mouseState;
+        if (reading->GetMouseState(&mouseState))
+        {
+            static GameInputMouseState lastState;
+            if (mouseState.buttons & GameInputMouseRightButton)
+            {
+                if (!(lastState.buttons & GameInputMouseRightButton))
+                {
+                    lastState = mouseState;
+                }
+
+                float yaw = (mouseState.positionX - lastState.positionX) * sensitivity;
+                float pitch = (mouseState.positionY - lastState.positionY) * sensitivity;
+                yaw = DirectX::XMConvertToRadians(yaw);
+                pitch = DirectX::XMConvertToRadians(pitch);
+                m_camera->Yaw(yaw);
+                m_camera->Pitch(pitch);
+                //m_camera->Rotate(yaw, pitch);
+            }
+            lastState = mouseState;
+        }
+
+        m_globalParams->view = DirectX::XMMatrixTranspose(m_camera->GetView());
+        m_globalParams->projection = DirectX::XMMatrixTranspose(m_camera->GetProjection());
+        m_globalParams->time = std::chrono::duration<float>(std::chrono::steady_clock::now() - m_timeSinceStart).count();
+        uint8_t* gpuPtr = nullptr;
+        CD3DX12_RANGE range(0, 0);
+        winrt::check_hresult(m_constantResource->Map(0, &range, reinterpret_cast<void**>(&gpuPtr)));
+        memcpy(gpuPtr, m_globalParams.get(), sizeof(GlobalParameters));
+        m_constantResource->Unmap(0, nullptr);
+    }
+    else if (m_gameDevice)
+    {
+        m_gameDevice->Release();
+        m_gameDevice.detach();
+    }
 }

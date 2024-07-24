@@ -2,6 +2,7 @@
 
 #include "Device.h"
 #include "Shader.h"
+#include "Camera.h"
 
 namespace Vortex
 {
@@ -117,6 +118,8 @@ namespace Vortex
 		// Viewport dimensions.
 		//uint32_t m_width;
 		//uint32_t m_height;
+
+		std::shared_ptr<Camera> m_camera;
 
 		// GPU Resources.
 		winrt::com_ptr<ID3D12Resource> m_constantResource;
